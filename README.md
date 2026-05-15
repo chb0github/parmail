@@ -99,6 +99,37 @@ docker buildx build --platform linux/amd64,linux/arm64 -t parmail .
 
 Produces a `FROM scratch` image with just the statically-linked binary and CA certificates.
 
+The container defaults to `parmail lambda` for use as an AWS Lambda container image. To use it locally for batch processing, override the command:
+
+```bash
+# Run as Lambda (default)
+docker run parmail
+
+# Process local files (mount a volume)
+docker run -v ./samples:/data/input -v ./output:/data/output \
+  parmail process -s /data/output /data/input
+
+# Process from S3 (pass AWS credentials)
+docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_REGION \
+  parmail process -s s3://my-bucket/output s3://my-bucket/emails/
+```
+
+### Deploying to Lambda
+
+```bash
+# Build and push to ECR
+aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_URL
+docker build -t $ECR_URL:latest .
+docker push $ECR_URL:latest
+
+# Update Lambda to use new image
+aws lambda update-function-code \
+  --function-name parmail \
+  --image-uri $ECR_URL:latest
+```
+
+The Lambda is triggered by S3 events when new emails land under the `emails/` prefix. It processes them and writes results to the `output/` prefix in the same bucket.
+
 ## Infrastructure
 
 Terraform configs in `terraform/` provision:
