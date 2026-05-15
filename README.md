@@ -22,19 +22,32 @@ At individual scale, this gives you a searchable archive of your physical mail. 
 
 ```bash
 # Validate AWS credentials and Bedrock access
-./target/release/parmail validate
+parmail validate
 
 # Process a single .eml file
-./target/release/parmail process message.eml
+parmail process message.eml
 
 # Process a directory of .eml files recursively
-./target/release/parmail process samples/ --storage-dir ./data
+parmail process samples/ --storage-dir ./data
 
-# Run as HTTP server
-./target/release/parmail serve --addr 0.0.0.0:3000
+# Mix files, directories, and S3 URIs
+parmail process samples/ s3://my-bucket/emails/ extra.eml
+
+# Process from S3 (lists all .eml files under prefix)
+parmail process s3://my-bucket/incoming/
 
 # Run as AWS Lambda (S3 event trigger)
-./target/release/parmail lambda
+parmail lambda
+```
+
+### Verbosity
+
+```bash
+parmail -qq process samples/   # Silent (errors only)
+parmail -q process samples/    # Spinner + percentage
+parmail process samples/       # Progress bar + one-liner per file (default)
+parmail -v process samples/    # All processing steps
+parmail -vv process samples/   # All steps + JSON dump
 ```
 
 ## Fetching emails
@@ -45,7 +58,7 @@ Use the included script to bulk-download USPS Informed Delivery emails from Gmai
 ./fetch_emails.sh -o samples/
 ```
 
-Requires `~/.netrc` with Gmail app password credentials. Run `./fetch_emails.sh -h` for options.
+Requires `~/.netrc` with Gmail app password credentials (no spaces in the password). Run `./fetch_emails.sh -h` for options.
 
 ## Output structure
 
@@ -93,4 +106,5 @@ Terraform configs in `terraform/` provision:
 
 - Rust 1.85+
 - AWS credentials with Bedrock access (Claude Sonnet)
+- For S3 input: AWS credentials with S3 read access
 - For email fetching: Gmail account with IMAP enabled and app password
