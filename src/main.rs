@@ -36,12 +36,12 @@ enum Commands {
     Validate,
     /// Process .eml files from local paths, directories, or s3:// URIs
     Process {
-        /// Paths to .eml files, directories, or s3://bucket/prefix URIs
-        #[arg(required = true)]
-        paths: Vec<String>,
-        /// Directory to store images and metadata
+        /// Directory or s3://bucket/prefix to store images and metadata
         #[arg(short, long, default_value = "./data")]
         storage_dir: String,
+        /// Paths to .eml files, directories, or s3://bucket/prefix URIs
+        #[arg(required = true, trailing_var_arg = true)]
+        paths: Vec<String>,
     },
 }
 
