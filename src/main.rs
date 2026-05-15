@@ -1,19 +1,29 @@
 mod analysis;
 mod email;
+mod input;
 mod lambda;
 mod models;
+pub mod output;
 mod processor;
-mod server;
 mod storage;
 mod validate;
 
 use anyhow::Result;
+use aws_sdk_s3::Client as S3Client;
 use clap::{Parser, Subcommand};
-use std::path::{Path, PathBuf};
+
+use input::{fetch_email, resolve_sources};
+use output::{Output, Verbosity};
 
 #[derive(Parser)]
 #[command(name = "parmail", about = "USPS Informed Delivery mail image processor")]
 struct Cli {
+    /// Increase verbosity (-v, -vv)
+    #[arg(short, long, action = clap::ArgAction::Count, global = true, conflicts_with = "quiet")]
+    verbose: u8,
+    /// Decrease verbosity (-q, -qq)
+    #[arg(short, long, action = clap::ArgAction::Count, global = true, conflicts_with = "verbose")]
+    quiet: u8,
     #[command(subcommand)]
     command: Commands,
 }
@@ -22,22 +32,13 @@ struct Cli {
 enum Commands {
     /// Run as an AWS Lambda function (S3 event trigger)
     Lambda,
-    /// Run as an HTTP server
-    Serve {
-        /// Address to bind to
-        #[arg(short, long, default_value = "0.0.0.0:3000")]
-        addr: String,
-        /// Directory to store images and metadata
-        #[arg(short, long, default_value = "./data")]
-        storage_dir: String,
-    },
     /// Validate AWS credentials and Bedrock access
     Validate,
-    /// Process local .eml file(s) directly (for testing)
+    /// Process .eml files from local paths, directories, or s3:// URIs
     Process {
-        /// Path to an .eml file or directory of .eml files (scanned recursively)
-        #[arg()]
-        path: String,
+        /// Paths to .eml files, directories, or s3://bucket/prefix URIs
+        #[arg(required = true)]
+        paths: Vec<String>,
         /// Directory to store images and metadata
         #[arg(short, long, default_value = "./data")]
         storage_dir: String,
@@ -46,86 +47,86 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive("parmail=info".parse()?),
-        )
-        .init();
-
     let cli = Cli::parse();
+
+    let verbosity = Verbosity::from_flags(cli.verbose, cli.quiet);
 
     match cli.command {
         Commands::Lambda => {
             lambda::run_lambda().await?;
         }
-        Commands::Serve { addr, storage_dir } => {
-            server::run_server(&addr, &storage_dir).await?;
-        }
         Commands::Validate => {
             let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
             let bedrock_client = aws_sdk_bedrockruntime::Client::new(&config);
             validate::validate_aws(&bedrock_client).await?;
-            println!("All AWS resources validated successfully.");
+            eprintln!("All AWS resources validated successfully.");
         }
-        Commands::Process { path, storage_dir } => {
-            let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
-            let bedrock_client = aws_sdk_bedrockruntime::Client::new(&config);
+        Commands::Process { paths, storage_dir } => {
+            let needs_s3 = paths.iter().any(|p| p.starts_with("s3://"));
+            let s3_client = if needs_s3 {
+                let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+                Some(S3Client::new(&config))
+            } else {
+                None
+            };
 
-            validate::validate_aws(&bedrock_client).await?;
+            // let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+            // let bedrock_client = aws_sdk_bedrockruntime::Client::new(&config);
+            // validate::validate_aws(&bedrock_client).await?;
 
             let storage = storage::LocalStorage::new(&storage_dir);
+            let sources = resolve_sources(&paths, s3_client.as_ref()).await?;
+            let out = Output::new(verbosity, true, sources.len() as u64);
+            let mut errors = 0u64;
 
-            let files = collect_eml_files(&path)?;
-            tracing::info!(count = files.len(), "Found .eml files to process");
+            for source in &sources {
+                let name = source.short_name();
+                out.start_file(&name);
 
-            for file in &files {
-                tracing::info!(path = %file.display(), "Processing");
-                let raw = tokio::fs::read(file).await?;
-                match processor::process_raw_email(&bedrock_client, &storage, &raw).await {
-                    Ok(manifest) => {
-                        tracing::info!(
-                            items = manifest.items.len(),
-                            subject = %manifest.email_subject,
-                            "Processed"
-                        );
+                let raw = match fetch_email(source, s3_client.as_ref()).await {
+                    Ok(data) => data,
+                    Err(e) => {
+                        out.error(&format!("{source}: {e}"));
+                        errors += 1;
+                        out.file_done(&name, 0);
+                        break;
+                    }
+                };
+
+                match email::parse_email(&raw) {
+                    Ok(parsed) => {
+                        out.step(&format!("Parsed: {}", parsed.info.subject));
+                        out.step(&format!("Images: {}", parsed.images.len()));
+
+                        match storage.ensure_email_dir(&parsed.info).await {
+                            Ok(dir) => {
+                                for image in &parsed.images {
+                                    out.step(&format!("Storing: {}", image.filename));
+                                    if let Err(e) = storage.store_image(&dir, &image.data, &image.filename).await {
+                                        out.error(&format!("Failed to store {}: {e}", image.filename));
+                                        errors += 1;
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                out.error(&format!("Failed to create dir: {e}"));
+                                errors += 1;
+                            }
+                        }
+
+                        out.file_done(&parsed.info.subject, parsed.images.len());
                     }
                     Err(e) => {
-                        tracing::error!(path = %file.display(), error = %e, "Failed to process");
+                        out.error(&format!("{source}: {e}"));
+                        errors += 1;
+                        out.file_done(&name, 0);
                     }
                 }
             }
+
+            out.finish(sources.len() as u64, errors);
         }
     }
 
-    Ok(())
-}
-
-fn collect_eml_files(path: &str) -> Result<Vec<PathBuf>> {
-    let path = Path::new(path);
-    let mut files = Vec::new();
-
-    if path.is_file() {
-        files.push(path.to_path_buf());
-    } else if path.is_dir() {
-        walk_dir(path, &mut files)?;
-    } else {
-        anyhow::bail!("Path does not exist: {}", path.display());
-    }
-
-    files.sort();
-    Ok(files)
-}
-
-fn walk_dir(dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
-    for entry in std::fs::read_dir(dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_dir() {
-            walk_dir(&path, files)?;
-        } else if path.extension().and_then(|e| e.to_str()) == Some("eml") {
-            files.push(path);
-        }
-    }
     Ok(())
 }
