@@ -7,12 +7,12 @@ use uuid::Uuid;
 use crate::analysis::analyze_image;
 use crate::email::parse_email;
 use crate::models::{EmailManifest, MailMetadata, MailType};
-use crate::storage::LocalStorage;
+use crate::storage::Storage;
 
 pub async fn process_s3_email(
     s3_client: &S3Client,
     bedrock_client: &BedrockClient,
-    storage: &LocalStorage,
+    storage: &Storage,
     bucket: &str,
     key: &str,
 ) -> Result<EmailManifest> {
@@ -39,7 +39,7 @@ pub async fn process_s3_email(
 
 pub async fn process_raw_email(
     bedrock_client: &BedrockClient,
-    storage: &LocalStorage,
+    storage: &Storage,
     raw_email: &[u8],
 ) -> Result<EmailManifest> {
     let parsed = parse_email(raw_email)?;

@@ -182,7 +182,7 @@ mod email_parsing {
 mod storage {
     use parmail::email::EmailInfo;
     use parmail::models::{EmailManifest, MailMetadata, MailType};
-    use parmail::storage::LocalStorage;
+    use parmail::storage::Storage;
     use tempfile::TempDir;
 
     fn sample_email_info() -> EmailInfo {
@@ -198,7 +198,7 @@ mod storage {
     #[tokio::test]
     async fn store_image_in_email_dir() {
         let tmp = TempDir::new().unwrap();
-        let storage = LocalStorage::new(tmp.path());
+        let storage = Storage::local(tmp.path());
         let info = sample_email_info();
 
         let dir = storage.ensure_email_dir(&info).await.unwrap();
@@ -210,7 +210,8 @@ mod storage {
 
         assert_eq!(filename, "test-001.jpg");
 
-        let full_path = dir.join(&filename);
+        let local_dir = dir.as_local_path().unwrap();
+        let full_path = local_dir.join(&filename);
         assert!(
             full_path.exists(),
             "Stored file should exist at {}",
@@ -224,11 +225,12 @@ mod storage {
     #[tokio::test]
     async fn email_dir_structure_uses_date_and_slug() {
         let tmp = TempDir::new().unwrap();
-        let storage = LocalStorage::new(tmp.path());
+        let storage = Storage::local(tmp.path());
         let info = sample_email_info();
 
         let dir = storage.ensure_email_dir(&info).await.unwrap();
-        let dir_str = dir.to_string_lossy();
+        let local_dir = dir.as_local_path().unwrap();
+        let dir_str = local_dir.to_string_lossy();
 
         assert!(
             dir_str.contains("2025-07-25"),
@@ -245,7 +247,7 @@ mod storage {
     #[tokio::test]
     async fn store_manifest_creates_json() {
         let tmp = TempDir::new().unwrap();
-        let storage = LocalStorage::new(tmp.path());
+        let storage = Storage::local(tmp.path());
         let info = sample_email_info();
 
         let dir = storage.ensure_email_dir(&info).await.unwrap();
@@ -271,7 +273,8 @@ mod storage {
 
         storage.store_manifest(&dir, &manifest).await.unwrap();
 
-        let manifest_path = dir.join("manifest.json");
+        let local_dir = dir.as_local_path().unwrap();
+        let manifest_path = local_dir.join("manifest.json");
         assert!(manifest_path.exists(), "manifest.json should exist");
 
         let json_str = std::fs::read_to_string(&manifest_path).unwrap();

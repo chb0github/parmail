@@ -62,7 +62,8 @@ async fn main() -> Result<()> {
             eprintln!("All AWS resources validated successfully.");
         }
         Commands::Process { paths, storage_dir } => {
-            let needs_s3 = paths.iter().any(|p| p.starts_with("s3://"));
+            let needs_s3 = paths.iter().any(|p| p.starts_with("s3://"))
+                || storage_dir.starts_with("s3://");
             let s3_client = if needs_s3 {
                 let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
                 Some(S3Client::new(&config))
@@ -74,7 +75,7 @@ async fn main() -> Result<()> {
             // let bedrock_client = aws_sdk_bedrockruntime::Client::new(&config);
             // validate::validate_aws(&bedrock_client).await?;
 
-            let storage = storage::LocalStorage::new(&storage_dir);
+            let storage = storage::Storage::from_uri(&storage_dir, s3_client.clone())?;
             let sources = resolve_sources(&paths, s3_client.as_ref()).await?;
             let out = Output::new(verbosity, true, sources.len() as u64);
             let mut errors = 0u64;

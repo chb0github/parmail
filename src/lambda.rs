@@ -5,7 +5,7 @@ use lambda_runtime::{service_fn, LambdaEvent};
 
 use crate::models::S3Event;
 use crate::processor::process_s3_email;
-use crate::storage::LocalStorage;
+use crate::storage::Storage;
 
 type LambdaError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -20,7 +20,7 @@ pub async fn run_lambda() -> Result<()> {
     let handler = service_fn(move |event: LambdaEvent<S3Event>| {
         let s3 = s3_client.clone();
         let bedrock = bedrock_client.clone();
-        let store = LocalStorage::new(&storage_dir);
+        let store = Storage::local(&storage_dir);
         async move { handle_s3_event(&s3, &bedrock, &store, event).await }
     });
 
@@ -33,7 +33,7 @@ pub async fn run_lambda() -> Result<()> {
 async fn handle_s3_event(
     s3_client: &S3Client,
     bedrock_client: &BedrockClient,
-    storage: &LocalStorage,
+    storage: &Storage,
     event: LambdaEvent<S3Event>,
 ) -> std::result::Result<serde_json::Value, LambdaError> {
     let (s3_event, _context) = event.into_parts();

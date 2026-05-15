@@ -1,4 +1,5 @@
 use indicatif::{ProgressBar, ProgressStyle};
+use std::time::Instant;
 
 use crate::models::EmailManifest;
 
@@ -27,6 +28,7 @@ pub struct Output {
     verbosity: Verbosity,
     interactive: bool,
     progress: Option<ProgressBar>,
+    start: Instant,
 }
 
 impl Output {
@@ -48,6 +50,7 @@ impl Output {
             verbosity,
             interactive,
             progress,
+            start: Instant::now(),
         }
     }
 
@@ -105,10 +108,11 @@ impl Output {
             eprintln!();
         }
         if self.verbosity >= Verbosity::Normal {
-            let status = if errors == 0 {
-                format!("Done. Processed {total} emails.")
-            } else {
-                format!("Done. Processed {total} emails ({errors} errors).")
+            let elapsed = self.start.elapsed();
+            let secs = elapsed.as_secs_f64();
+            let status = match errors {
+                0 => format!("Done. Processed {total} emails in {secs:.2}s."),
+                _ => format!("Done. Processed {total} emails in {secs:.2}s ({errors} errors)."),
             };
             eprintln!("{status}");
         }

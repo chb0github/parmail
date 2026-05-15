@@ -36,6 +36,12 @@ parmail process samples/ s3://my-bucket/emails/ extra.eml
 # Process from S3 (lists all .eml files under prefix)
 parmail process s3://my-bucket/incoming/
 
+# Output to S3 instead of local disk
+parmail process samples/ --storage-dir s3://my-bucket/output/
+
+# S3 to S3
+parmail process s3://input-bucket/emails/ --storage-dir s3://output-bucket/results/
+
 # Run as AWS Lambda (S3 event trigger)
 parmail lambda
 ```
