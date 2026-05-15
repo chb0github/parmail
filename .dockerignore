@@ -2,3 +2,6 @@ target/
 data/
 .env
 *.eml
+samples/
+.idea/
+.envrc
