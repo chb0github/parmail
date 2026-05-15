@@ -12,8 +12,8 @@ resource "aws_lambda_function" "parmail" {
 
   environment {
     variables = {
-      STORAGE_DIR   = "/tmp/parmail"
-      RUST_LOG      = "parmail=info"
+      STORAGE_DIR = "s3://${aws_s3_bucket.parmail.id}/output"
+      RUST_LOG    = "parmail=info"
     }
   }
 }
@@ -23,7 +23,7 @@ resource "aws_lambda_permission" "allow_s3" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.parmail.function_name
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.email_storage.arn
+  source_arn    = aws_s3_bucket.parmail.arn
 }
 
 resource "aws_ecr_repository" "parmail" {

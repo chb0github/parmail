@@ -103,10 +103,10 @@ Produces a `FROM scratch` image with just the statically-linked binary and CA ce
 
 Terraform configs in `terraform/` provision:
 - SES receipt rule for incoming email
-- S3 buckets for email storage and images
-- Lambda function (container image)
+- Single S3 bucket with key prefixes (`emails/` for incoming, `output/` for results)
+- Lambda function (container image) triggered by S3 events under `emails/`
 - ECR repository
-- IAM roles with least-privilege access to S3 and Bedrock
+- IAM roles with least-privilege access scoped to key prefixes
 
 ## Requirements
 

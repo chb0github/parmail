@@ -14,15 +14,16 @@ resource "aws_ses_receipt_rule" "store_email" {
   scan_enabled  = true
 
   s3_action {
-    bucket_name = aws_s3_bucket.email_storage.id
-    position    = 1
+    bucket_name       = aws_s3_bucket.parmail.id
+    object_key_prefix = "emails/"
+    position          = 1
   }
 
   depends_on = [aws_s3_bucket_policy.allow_ses_write]
 }
 
 resource "aws_s3_bucket_policy" "allow_ses_write" {
-  bucket = aws_s3_bucket.email_storage.id
+  bucket = aws_s3_bucket.parmail.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -32,7 +33,7 @@ resource "aws_s3_bucket_policy" "allow_ses_write" {
         Effect    = "Allow"
         Principal = { Service = "ses.amazonaws.com" }
         Action    = "s3:PutObject"
-        Resource  = "${aws_s3_bucket.email_storage.arn}/*"
+        Resource  = "${aws_s3_bucket.parmail.arn}/emails/*"
         Condition = {
           StringEquals = {
             "AWS:SourceAccount" = data.aws_caller_identity.current.account_id

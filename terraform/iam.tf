@@ -27,14 +27,14 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Action = [
           "s3:GetObject",
         ]
-        Resource = "${aws_s3_bucket.email_storage.arn}/*"
+        Resource = "${aws_s3_bucket.parmail.arn}/emails/*"
       },
       {
         Effect = "Allow"
         Action = [
           "s3:PutObject",
         ]
-        Resource = "${aws_s3_bucket.image_storage.arn}/*"
+        Resource = "${aws_s3_bucket.parmail.arn}/output/*"
       },
       {
         Effect = "Allow"
