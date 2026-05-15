@@ -71,10 +71,6 @@ async fn main() -> Result<()> {
                 None
             };
 
-            // let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
-            // let bedrock_client = aws_sdk_bedrockruntime::Client::new(&config);
-            // validate::validate_aws(&bedrock_client).await?;
-
             let storage = storage::Storage::from_uri(&storage_dir, s3_client.clone())?;
             let sources = resolve_sources(&paths, s3_client.as_ref()).await?;
             let out = Output::new(verbosity, true, sources.len() as u64);
