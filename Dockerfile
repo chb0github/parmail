@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM rust:1.85-bookworm AS builder
+FROM --platform=$BUILDPLATFORM rust:1.91-bookworm AS builder
 
 ARG TARGETARCH
 
@@ -31,7 +31,7 @@ RUN RUST_TARGET=$(cat /rust_target) && \
     cargo build --release --target "$RUST_TARGET" && \
     cp "target/$RUST_TARGET/release/parmail" /parmail
 
-FROM scratch
+FROM scratch AS app
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /parmail /parmail
