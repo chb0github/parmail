@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use mail_parser::{Address as MailAddress, HeaderValue, MessageParser, MimeHeaders, PartType};
+use mail_parser::{Address as MailAddress, MessageParser, MimeHeaders, PartType};
 use sha2::{Digest, Sha256};
 
 pub struct ExtractedImage {
@@ -53,7 +53,60 @@ pub fn parse_email(raw_email: &[u8]) -> Result<ParsedEmail> {
 
     let subject = message.subject().unwrap_or("unknown").to_string();
 
-    let from = match message.from() {
+    let from = extract_from(&message);
+
+    let date = extract_date(&message);
+
+    let message_id = message
+        .message_id()
+        .unwrap_or("unknown")
+        .to_string();
+
+    let images: Vec<ExtractedImage> = message
+        .parts
+        .iter()
+        .filter(|part| extract_content_type(part).starts_with("image/"))
+        .filter_map(|part| {
+            let data = match &part.body {
+                PartType::Binary(bytes) | PartType::InlineBinary(bytes) => bytes.to_vec(),
+                _ => return None,
+            };
+            if data.is_empty() {
+                return None;
+            }
+            Some(ExtractedImage {
+                filename: extract_filename(part),
+                content_type: extract_content_type(part),
+                data,
+            })
+        })
+        .collect();
+
+    Ok(ParsedEmail {
+        info: EmailInfo {
+            subject,
+            from,
+            date,
+            message_id,
+        },
+        images,
+    })
+}
+
+fn extract_date(message: &mail_parser::Message) -> String {
+    message
+        .date()
+        .map(|d| {
+            format!(
+                "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+                d.year, d.month, d.day, d.hour, d.minute, d.second
+            )
+        })
+        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339())
+}
+
+fn extract_from(message: &mail_parser::Message) -> String {
+    match message.from() {
         Some(MailAddress::List(addrs)) => addrs
             .first()
             .and_then(|a| {
@@ -69,66 +122,25 @@ pub fn parse_email(raw_email: &[u8]) -> Result<ParsedEmail> {
             .map(|s| s.to_string())
             .unwrap_or_else(|| "unknown".to_string()),
         _ => "unknown".to_string(),
-    };
+    }
+}
 
-    let date = message
-        .date()
-        .map(|d| {
-            format!(
-                "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-                d.year, d.month, d.day, d.hour, d.minute, d.second
-            )
-        })
-        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
-
-    let message_id = message
-        .message_id()
-        .unwrap_or("unknown")
-        .to_string();
-
-    let mut images = Vec::new();
-
-    for part in message.parts.iter() {
-        let content_type = part.content_type().map(|ct| {
+fn extract_content_type(part: &mail_parser::MessagePart) -> String {
+    part.content_type()
+        .map(|ct| {
             let main = ct.ctype();
             let sub = ct.subtype().unwrap_or("octet-stream");
             format!("{main}/{sub}")
-        });
+        })
+        .unwrap_or_else(|| "application/octet-stream".to_string())
+}
 
-        let ct = content_type.unwrap_or_else(|| "application/octet-stream".to_string());
-
-        if ct.starts_with("image/") {
-            let filename = part
-                .attachment_name()
-                .or_else(|| {
-                    part.content_id()
-                        .map(|id| id.trim_matches(|c| c == '<' || c == '>'))
-                })
-                .unwrap_or("unnamed.jpg")
-                .to_string();
-
-            let data = match &part.body {
-                PartType::Binary(bytes) | PartType::InlineBinary(bytes) => bytes.to_vec(),
-                _ => Vec::new(),
-            };
-
-            if !data.is_empty() {
-                images.push(ExtractedImage {
-                    filename,
-                    content_type: ct,
-                    data,
-                });
-            }
-        }
-    }
-
-    Ok(ParsedEmail {
-        info: EmailInfo {
-            subject,
-            from,
-            date,
-            message_id,
-        },
-        images,
-    })
+fn extract_filename(part: &mail_parser::MessagePart) -> String {
+    part.attachment_name()
+        .or_else(|| {
+            part.content_id()
+                .map(|id| id.trim_matches(|c| c == '<' || c == '>'))
+        })
+        .unwrap_or("unnamed.jpg")
+        .to_string()
 }
