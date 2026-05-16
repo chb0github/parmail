@@ -10,12 +10,7 @@ variable "project_name" {
   default     = "parmail"
 }
 
-variable "ses_domain" {
-  description = "Domain configured for SES email receiving"
-  type        = string
-}
-
-variable "recipient_email" {
-  description = "Email address that will receive USPS Informed Delivery emails"
+variable "forward_email" {
+  description = "Email address to forward incoming mail to (for USPS confirmation)"
   type        = string
 }

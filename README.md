@@ -133,11 +133,35 @@ The Lambda is triggered by S3 events when new emails land under the `emails/` pr
 ## Infrastructure
 
 Terraform configs in `terraform/` provision:
-- SES receipt rule for incoming email
+- Random `.click` domain via Route53 (for receiving email)
+- Route53 hosted zone with MX record pointing to SES
+- SES domain identity with DNS verification
+- SES receipt rule storing incoming mail to S3 and forwarding via SNS
+- SNS topic + email subscription for forwarding to your real inbox (needed for USPS confirmation)
 - Single S3 bucket with key prefixes (`emails/` for incoming, `output/` for results)
 - Lambda function (container image) triggered by S3 events under `emails/`
 - ECR repository
 - IAM roles with least-privilege access scoped to key prefixes
+
+### Setup
+
+```bash
+cd terraform
+terraform init
+terraform apply -var="forward_email=your-real@gmail.com"
+```
+
+Note: Domain registration is not yet supported by Terraform. After the first apply, register the domain via CLI:
+
+```bash
+aws route53domains register-domain \
+  --domain-name "$(terraform output -raw domain_name)" \
+  --duration-in-years 1 --auto-renew \
+  --admin-contact '{"FirstName":"...","LastName":"...","ContactType":"PERSON","Email":"...","PhoneNumber":"+1.555...","CountryCode":"US","State":"CA","City":"...","AddressLine1":"...","ZipCode":"..."}' \
+  --registrant-contact <same> --tech-contact <same>
+```
+
+Then re-run `terraform apply` to configure DNS and SES on the new domain.
 
 ## Requirements
 
