@@ -12,10 +12,8 @@ resource "docker_registry_image" "parmail" {
   keep_remotely = true
 
   build {
-    context    = "${path.module}/.."
-    dockerfile = "Dockerfile"
-    platform   = "linux/amd64,linux/arm64"
-    builder    = "default"
+    context    = abspath("${path.module}/..")
+    dockerfile = abspath("${path.module}/../Dockerfile")
   }
 
   triggers = {

@@ -90,14 +90,10 @@ cargo build --release
 ## Docker
 
 ```bash
-# Native architecture
 docker build -t parmail .
-
-# Multi-arch
-docker buildx build --platform linux/amd64,linux/arm64 -t parmail .
 ```
 
-Produces a `FROM scratch` image with just the statically-linked binary and CA certificates.
+Produces a `debian:bookworm-slim` based image with the release binary and CA certificates.
 
 The container defaults to `parmail lambda` for use as an AWS Lambda container image. To use it locally for batch processing, override the command:
 
