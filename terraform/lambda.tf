@@ -16,7 +16,6 @@ resource "docker_registry_image" "parmail" {
     dockerfile = "Dockerfile"
     platform   = "linux/amd64,linux/arm64"
     builder    = "default"
-    provenance = "false"
   }
 
   triggers = {
