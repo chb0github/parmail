@@ -9,7 +9,7 @@ resource "aws_ses_active_receipt_rule_set" "main" {
 resource "aws_ses_receipt_rule" "store_email" {
   name          = "${var.project_name}-store"
   rule_set_name = aws_ses_receipt_rule_set.main.rule_set_name
-  recipients    = ["cbongiorno@${random_pet.domain.id}.click"]
+  recipients    = ["cbongiorno@parmail.${var.parent_domain}"]
   enabled       = true
   scan_enabled  = true
 

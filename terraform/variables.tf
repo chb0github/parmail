@@ -10,6 +10,17 @@ variable "project_name" {
   default     = "parmail"
 }
 
+variable "parent_domain" {
+  description = "Parent domain you own (must have a Route53 hosted zone). Subdomain parmail.<domain> will be created."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.parent_domain != ""
+    error_message = "parent_domain is required. Set TF_VAR_parent_domain env var or pass -var=\"parent_domain=example.com\""
+  }
+}
+
 variable "forward_email" {
   description = "Email address to forward incoming mail to (for USPS confirmation)"
   type        = string

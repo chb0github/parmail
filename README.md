@@ -133,36 +133,47 @@ aws lambda update-function-code \
 ## Infrastructure
 
 Terraform configs in `terraform/` provision:
-- Random `.click` domain via Route53 (for receiving email)
-- Route53 hosted zone with MX record pointing to SES
+- Subdomain hosted zone (`parmail.<your-domain>`) with NS delegation from parent
+- Route53 MX record pointing to SES inbound
 - SES domain identity with DNS verification
 - SES receipt rule storing incoming mail to S3 and forwarding via SNS
 - SNS topic + email subscription for forwarding to your real inbox (needed for USPS confirmation)
 - Single S3 bucket with key prefixes (`emails/` for incoming, `output/` for results)
-- Docker image build and push to ECR (arm64, via kreuzwerker/docker provider)
+- Docker image build and push to ECR (multi-arch, via kreuzwerker/docker provider)
 - Lambda function (container image, arm64) triggered by S3 events under `emails/`
 - ECR repository
 - IAM roles with least-privilege access scoped to key prefixes
 
 ### Setup
 
+Requires a domain you own with a Route53 hosted zone in the same account.
+
 ```bash
 cd terraform
 terraform init
-terraform apply -var="forward_email=your-real@gmail.com"
+terraform apply \
+  -var="parent_domain=yourdomain.com" \
+  -var="forward_email=your-real@gmail.com"
 ```
 
-Note: Domain registration is not yet supported by Terraform. After the first apply, register the domain via CLI:
+Or via environment variables:
 
 ```bash
-aws route53domains register-domain \
-  --domain-name "$(terraform output -raw domain_name)" \
-  --duration-in-years 1 --auto-renew \
-  --admin-contact '{"FirstName":"...","LastName":"...","ContactType":"PERSON","Email":"...","PhoneNumber":"+1.555...","CountryCode":"US","State":"CA","City":"...","AddressLine1":"...","ZipCode":"..."}' \
-  --registrant-contact <same> --tech-contact <same>
+export TF_VAR_parent_domain=yourdomain.com
+export TF_VAR_forward_email=your-real@gmail.com
+terraform apply
 ```
 
-Then re-run `terraform apply` to configure DNS and SES on the new domain.
+### Registering a new domain (optional)
+
+If you need a new domain, use the included registration script:
+
+```bash
+export FIRST_NAME=... LAST_NAME=... EMAIL=... PHONE="+1.555..." STATE=CA CITY=... ADDRESS=... ZIP=...
+./terraform/register_domain.sh yourdomain.click
+```
+
+Then create a hosted zone for it before running `terraform apply`.
 
 ## Requirements
 
