@@ -93,7 +93,7 @@ cargo build --release
 docker build -t parmail .
 ```
 
-Produces a `debian:bookworm-slim` based image with the release binary and CA certificates.
+Produces a `FROM scratch` image with just the statically-linked binary and CA certificates.
 
 The container defaults to `parmail lambda` for use as an AWS Lambda container image. To use it locally for batch processing, override the command:
 
