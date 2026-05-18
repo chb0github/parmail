@@ -132,10 +132,9 @@ Terraform configs in `terraform/` provision:
 - Subdomain hosted zone (`parmail.<your-domain>`) with NS delegation from parent
 - Route53 MX record pointing to SES inbound
 - SES domain identity with DNS verification
-- SES receipt rule storing incoming mail to S3 and forwarding via SNS
-- SNS topic + email subscription for forwarding to your real inbox (needed for USPS confirmation)
+- SES receipt rule storing incoming mail to S3
 - Single S3 bucket with key prefixes (`emails/` for incoming, `output/` for results)
-- Docker image build and push to ECR (multi-arch, via kreuzwerker/docker provider)
+- Docker image build and push to ECR (via kreuzwerker/docker provider)
 - Lambda function (container image, arm64) triggered by S3 events under `emails/`
 - ECR repository
 - IAM roles with least-privilege access scoped to key prefixes
@@ -147,17 +146,23 @@ Requires a domain you own with a Route53 hosted zone in the same account.
 ```bash
 cd terraform
 terraform init
-terraform apply \
-  -var="parent_domain=yourdomain.com" \
-  -var="forward_email=your-real@gmail.com"
+terraform apply -var="parent_domain=yourdomain.com"
 ```
 
 Or via environment variables:
 
 ```bash
 export TF_VAR_parent_domain=yourdomain.com
-export TF_VAR_forward_email=your-real@gmail.com
 terraform apply
+```
+
+### USPS Informed Delivery confirmation
+
+After signing up for Informed Delivery with your new email address, USPS will send a verification email. Since there's no inbox (emails go straight to S3), retrieve it manually:
+
+```bash
+aws s3 ls s3://parmail-<account-id>/emails/ --recursive
+aws s3 cp s3://parmail-<account-id>/emails/<key> - | grep -i "https.*confirm\|https.*verify"
 ```
 
 ### Registering a new domain (optional)
