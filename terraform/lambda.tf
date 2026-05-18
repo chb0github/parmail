@@ -14,7 +14,8 @@ resource "docker_registry_image" "parmail" {
   build {
     context    = "${path.module}/.."
     dockerfile = "Dockerfile"
-    platform   = "linux/arm64"
+    platform   = "linux/amd64,linux/arm64"
+    builder    = "default"
     provenance = "false"
   }
 
