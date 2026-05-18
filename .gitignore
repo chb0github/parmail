@@ -3,3 +3,10 @@
 /data
 .idea/
 .envrc
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform.lock.hcl
