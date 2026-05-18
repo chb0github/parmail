@@ -44,5 +44,5 @@ output "domain_name" {
 }
 
 output "email_address" {
-  value = "cbongiorno@parmail.${var.parent_domain}"
+  value = "${var.email_user}@parmail.${var.parent_domain}"
 }

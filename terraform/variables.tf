@@ -21,6 +21,12 @@ variable "parent_domain" {
   }
 }
 
+variable "email_user" {
+  description = "Local part of the email address (e.g. 'usps' becomes usps@parmail.<domain>)"
+  type        = string
+  default     = "usps"
+}
+
 variable "forward_email" {
   description = "Email address to forward incoming mail to (for USPS confirmation)"
   type        = string
