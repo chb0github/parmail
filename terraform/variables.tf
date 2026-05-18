@@ -27,13 +27,3 @@ variable "email_user" {
   default     = "usps"
 }
 
-variable "forward_email" {
-  description = "Email address to forward incoming mail to (for USPS confirmation)"
-  type        = string
-  default     = ""
-
-  validation {
-    condition     = var.forward_email != ""
-    error_message = "forward_email is required. Set TF_VAR_forward_email env var or pass -var=\"forward_email=you@example.com\""
-  }
-}

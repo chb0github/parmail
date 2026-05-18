@@ -19,11 +19,6 @@ resource "aws_ses_receipt_rule" "store_email" {
     position          = 1
   }
 
-  sns_action {
-    topic_arn = aws_sns_topic.email_forward.arn
-    position  = 2
-  }
-
   depends_on = [aws_s3_bucket_policy.allow_ses_write]
 }
 
@@ -47,14 +42,4 @@ resource "aws_s3_bucket_policy" "allow_ses_write" {
       }
     ]
   })
-}
-
-resource "aws_sns_topic" "email_forward" {
-  name = "${var.project_name}-email-forward"
-}
-
-resource "aws_sns_topic_subscription" "forward_to_email" {
-  topic_arn = aws_sns_topic.email_forward.arn
-  protocol  = "email"
-  endpoint  = var.forward_email
 }
