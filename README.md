@@ -116,19 +116,19 @@ docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_REGION \
 
 ### Deploying to Lambda
 
+The Docker image is built and pushed to ECR automatically as part of `terraform apply`. The Lambda is triggered by S3 events when new emails land under the `emails/` prefix. It processes them and writes results to the `output/` prefix in the same bucket.
+
+To manually rebuild and deploy outside Terraform:
+
 ```bash
-# Build and push to ECR
 aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_URL
 docker build -t $ECR_URL:latest .
 docker push $ECR_URL:latest
 
-# Update Lambda to use new image
 aws lambda update-function-code \
   --function-name parmail \
   --image-uri $ECR_URL:latest
 ```
-
-The Lambda is triggered by S3 events when new emails land under the `emails/` prefix. It processes them and writes results to the `output/` prefix in the same bucket.
 
 ## Infrastructure
 
@@ -139,7 +139,8 @@ Terraform configs in `terraform/` provision:
 - SES receipt rule storing incoming mail to S3 and forwarding via SNS
 - SNS topic + email subscription for forwarding to your real inbox (needed for USPS confirmation)
 - Single S3 bucket with key prefixes (`emails/` for incoming, `output/` for results)
-- Lambda function (container image) triggered by S3 events under `emails/`
+- Docker image build and push to ECR (arm64, via kreuzwerker/docker provider)
+- Lambda function (container image, arm64) triggered by S3 events under `emails/`
 - ECR repository
 - IAM roles with least-privilege access scoped to key prefixes
 
