@@ -1,3 +1,4 @@
+# Top senders by frequency
 [
   .[] |
   .mail_pieces[] |

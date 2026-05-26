@@ -1,3 +1,4 @@
+# Address resolution rates (resolved/redacted/unreadable/not_analyzed)
 (
   [.[] | {field: "to", status: .to_address.status}] +
   [.[] | .mail_pieces[] | {field: "from", status: .from_address.status}]

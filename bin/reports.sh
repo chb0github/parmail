@@ -22,7 +22,8 @@ usage() {
   echo "" >&2
   echo "Available reports:" >&2
   for r in $(available_reports); do
-    echo "  $r" >&2
+    local desc=$(head -1 "${JQ_DIR}/${r}.jq" | sed 's/^# *//')
+    printf "  %-6s %s\n" "$r" "$desc" >&2
   done
   exit 1
 }

@@ -1,6 +1,5 @@
 mod analysis;
 mod email;
-mod export;
 mod input;
 mod lambda;
 mod models;
@@ -48,15 +47,6 @@ enum Commands {
         /// Paths to .eml files, directories, or s3://bucket/prefix URIs
         #[arg(required = true, trailing_var_arg = true)]
         paths: Vec<String>,
-    },
-    /// Export processed manifests to CSV
-    Export {
-        /// Data directory containing manifest subdirectories
-        #[arg(short, long, default_value = "./data")]
-        data_dir: String,
-        /// Output file path
-        #[arg(short, long)]
-        output: Option<String>,
     },
 }
 
@@ -133,14 +123,6 @@ async fn main() -> Result<()> {
                 .await;
 
             out.finish(total, errors.load(Ordering::Relaxed));
-        }
-        Commands::Export { data_dir, output } => {
-            let data_path = std::path::Path::new(&data_dir);
-            let output_path = output.unwrap_or_else(|| format!("{}/parmail.csv", data_dir));
-            let out_path = std::path::Path::new(&output_path);
-
-            let rows = export::export_csv(data_path, out_path)?;
-            eprintln!("Exported {rows} rows to {output_path}");
         }
     }
 

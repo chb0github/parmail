@@ -1,3 +1,4 @@
+# Mail type breakdown (advertising/financial/personal/etc) with percentages
 [.[] | .mail_pieces[].mail_type] |
 length as $total |
 group_by(.) |

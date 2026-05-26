@@ -1,3 +1,4 @@
+# Repeat senders (5+ times) - unsubscribe candidates
 [.[] |
   .received_date as $date |
   .mail_pieces[] |
