@@ -1,5 +1,6 @@
 mod analysis;
 mod email;
+mod export;
 mod input;
 mod lambda;
 mod models;
@@ -48,6 +49,24 @@ enum Commands {
         #[arg(required = true, trailing_var_arg = true)]
         paths: Vec<String>,
     },
+    /// Export processed manifests to parquet or CSV
+    Export {
+        /// Output format
+        #[arg(short, long, default_value = "parquet")]
+        format: ExportFormat,
+        /// Data directory containing manifest subdirectories
+        #[arg(short, long, default_value = "./data")]
+        data_dir: String,
+        /// Output file path
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+}
+
+#[derive(Clone, clap::ValueEnum)]
+enum ExportFormat {
+    Parquet,
+    Csv,
 }
 
 #[tokio::main]
@@ -123,6 +142,21 @@ async fn main() -> Result<()> {
                 .await;
 
             out.finish(total, errors.load(Ordering::Relaxed));
+        }
+        Commands::Export { format, data_dir, output } => {
+            let data_path = std::path::Path::new(&data_dir);
+            let output_path = output.unwrap_or_else(|| match format {
+                ExportFormat::Parquet => format!("{}/parmail.parquet", data_dir),
+                ExportFormat::Csv => format!("{}/parmail.csv", data_dir),
+            });
+            let out_path = std::path::Path::new(&output_path);
+
+            let rows = match format {
+                ExportFormat::Parquet => export::export_parquet(data_path, out_path)?,
+                ExportFormat::Csv => export::export_csv(data_path, out_path)?,
+            };
+
+            eprintln!("Exported {rows} rows to {output_path}");
         }
     }
 
