@@ -1,8 +1,12 @@
 /target
 /samples
 /data
+/reports
+*.csv
+*.log
 .idea/
 .envrc
+.claude/
 
 # Terraform
 .terraform/
