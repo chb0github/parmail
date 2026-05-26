@@ -151,7 +151,7 @@ fn walk_dir(dir: &Path, sources: &mut Vec<EmailSource>) -> Result<()> {
         let path = entry.path();
         if path.is_dir() {
             walk_dir(&path, sources)?;
-        } else if path.extension().and_then(|e| e.to_str()) == Some("eml") {
+        } else if path.is_file() {
             sources.push(EmailSource::Local(path));
         }
     }

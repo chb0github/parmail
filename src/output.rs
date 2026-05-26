@@ -69,17 +69,18 @@ impl Output {
         }
     }
 
-    pub fn file_done(&self, subject: &str, image_count: usize) {
+    pub fn file_done(&self, received_date: &str, message_id: &str, image_count: usize, success: bool) {
+        let status = if success { "OK" } else { "ERR" };
         if let Some(pb) = &self.progress {
             pb.inc(1);
             if self.verbosity >= Verbosity::Normal {
-                pb.set_message(format!("{subject} — {image_count} images"));
+                pb.set_message(format!("{status} {received_date}: {image_count} images"));
             }
         } else if self.verbosity >= Verbosity::Normal {
             if self.interactive {
-                eprint!("\r\x1b[K  {subject} — {image_count} images");
+                eprint!("\r\x1b[K  {status} {received_date}: {message_id}, {image_count} images");
             } else {
-                eprintln!("{subject} — {image_count} images");
+                eprintln!("{status} {received_date}: {message_id}, {image_count} images");
             }
         }
     }

@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
+use indexmap::IndexMap;
 use mail_parser::{Address as MailAddress, MessageParser, MimeHeaders, PartType};
-use sha2::{Digest, Sha256};
+use xxhash_rust::xxh3::xxh3_64;
 
 pub struct ExtractedImage {
     pub filename: String,
@@ -16,20 +17,8 @@ pub struct EmailInfo {
 }
 
 impl EmailInfo {
-    pub fn dir_name(&self) -> String {
-        let hash = hex::encode(&Sha256::digest(self.message_id.as_bytes())[..4]);
-        let slug = self
-            .subject
-            .chars()
-            .filter(|c| c.is_alphanumeric() || *c == ' ')
-            .collect::<String>()
-            .split_whitespace()
-            .take(4)
-            .collect::<Vec<_>>()
-            .join("-")
-            .to_lowercase();
-
-        format!("{slug}-{hash}")
+    pub fn id(&self) -> String {
+        format!("{:016x}", xxh3_64(self.message_id.as_bytes()))
     }
 
     pub fn date_folder(&self) -> String {
@@ -143,4 +132,36 @@ fn extract_filename(part: &mail_parser::MessagePart) -> String {
         })
         .unwrap_or("unnamed.jpg")
         .to_string()
+}
+
+pub fn is_content_image(filename: &str) -> bool {
+    filename.starts_with("ra_0_") || filename.starts_with("content-")
+}
+
+pub fn extract_piece_id(filename: &str) -> String {
+    let stem = filename.strip_suffix(".jpg")
+        .or_else(|| filename.strip_suffix(".jpeg"))
+        .or_else(|| filename.strip_suffix(".png"))
+        .unwrap_or(filename);
+
+    if let Some(id) = stem.strip_prefix("mailer-") {
+        return id.to_string();
+    }
+    if let Some(id) = stem.strip_prefix("content-") {
+        return id.to_string();
+    }
+    if let Some(id) = stem.strip_prefix("ra_0_") {
+        return id.to_string();
+    }
+
+    stem.to_string()
+}
+
+pub fn group_images_by_piece(images: Vec<ExtractedImage>) -> IndexMap<String, Vec<ExtractedImage>> {
+    let mut groups: IndexMap<String, Vec<ExtractedImage>> = IndexMap::new();
+    for image in images {
+        let piece_id = extract_piece_id(&image.filename);
+        groups.entry(piece_id).or_default().push(image);
+    }
+    groups
 }
