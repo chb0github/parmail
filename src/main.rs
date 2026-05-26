@@ -11,6 +11,8 @@ mod validate;
 use anyhow::Result;
 use aws_sdk_s3::Client as S3Client;
 use clap::{Parser, Subcommand};
+use futures::stream::{self, StreamExt};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use input::{fetch_email, resolve_sources};
 use output::{Output, Verbosity};
@@ -39,6 +41,9 @@ enum Commands {
         /// Directory or s3://bucket/prefix to store images and metadata
         #[arg(short, long, default_value = "./data")]
         storage_dir: String,
+        /// Concurrent email processing limit
+        #[arg(short, long, default_value = "10")]
+        concurrency: usize,
         /// Paths to .eml files, directories, or s3://bucket/prefix URIs
         #[arg(required = true, trailing_var_arg = true)]
         paths: Vec<String>,
@@ -47,6 +52,12 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_target(false)
+        .without_time()
+        .init();
+
     let cli = Cli::parse();
 
     let verbosity = Verbosity::from_flags(cli.verbose, cli.quiet);
@@ -61,11 +72,13 @@ async fn main() -> Result<()> {
             validate::validate_aws(&bedrock_client).await?;
             eprintln!("All AWS resources validated successfully.");
         }
-        Commands::Process { paths, storage_dir } => {
+        Commands::Process { paths, storage_dir, concurrency } => {
+            let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+            let bedrock_client = aws_sdk_bedrockruntime::Client::new(&config);
+
             let needs_s3 = paths.iter().any(|p| p.starts_with("s3://"))
                 || storage_dir.starts_with("s3://");
             let s3_client = if needs_s3 {
-                let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
                 Some(S3Client::new(&config))
             } else {
                 None
@@ -73,55 +86,43 @@ async fn main() -> Result<()> {
 
             let storage = storage::Storage::from_uri(&storage_dir, s3_client.clone())?;
             let sources = resolve_sources(&paths, s3_client.as_ref()).await?;
-            let out = Output::new(verbosity, true, sources.len() as u64);
-            let mut errors = 0u64;
+            let out = Output::new(verbosity, std::io::IsTerminal::is_terminal(&std::io::stderr()), sources.len() as u64);
+            let errors = AtomicU64::new(0);
+            let total = sources.len() as u64;
 
-            for source in &sources {
-                let name = source.short_name();
-                out.start_file(&name);
+            stream::iter(sources.iter())
+                .for_each_concurrent(concurrency, |source| {
+                    let bedrock = &bedrock_client;
+                    let store = &storage;
+                    let s3 = &s3_client;
+                    let out = &out;
+                    let errors = &errors;
+                    async move {
+                        let name = source.short_name();
+                        let raw = match fetch_email(source, s3.as_ref()).await {
+                            Ok(data) => data,
+                            Err(e) => {
+                                out.error(&format!("{source}: {e}"));
+                                errors.fetch_add(1, Ordering::Relaxed);
+                                return;
+                            }
+                        };
 
-                let raw = match fetch_email(source, s3_client.as_ref()).await {
-                    Ok(data) => data,
-                    Err(e) => {
-                        out.error(&format!("{source}: {e}"));
-                        errors += 1;
-                        out.file_done(&name, 0);
-                        break;
-                    }
-                };
-
-                match email::parse_email(&raw) {
-                    Ok(parsed) => {
-                        out.step(&format!("Parsed: {}", parsed.info.subject));
-                        out.step(&format!("Images: {}", parsed.images.len()));
-
-                        match storage.ensure_email_dir(&parsed.info).await {
-                            Ok(dir) => {
-                                for image in &parsed.images {
-                                    out.step(&format!("Storing: {}", image.filename));
-                                    if let Err(e) = storage.store_image(&dir, &image.data, &image.filename).await {
-                                        out.error(&format!("Failed to store {}: {e}", image.filename));
-                                        errors += 1;
-                                    }
-                                }
+                        match processor::process_raw_email(bedrock, store, &name, &raw).await {
+                            Ok(manifest) => {
+                                out.file_done(&manifest.received_date.to_string(), &manifest.email_message_id, manifest.mail_pieces.len(), true);
                             }
                             Err(e) => {
-                                out.error(&format!("Failed to create dir: {e}"));
-                                errors += 1;
+                                out.file_done(&name, "", 0, false);
+                                out.error(&format!("{source}: {e}"));
+                                errors.fetch_add(1, Ordering::Relaxed);
                             }
                         }
-
-                        out.file_done(&parsed.info.subject, parsed.images.len());
                     }
-                    Err(e) => {
-                        out.error(&format!("{source}: {e}"));
-                        errors += 1;
-                        out.file_done(&name, 0);
-                    }
-                }
-            }
+                })
+                .await;
 
-            out.finish(sources.len() as u64, errors);
+            out.finish(total, errors.load(Ordering::Relaxed));
         }
     }
 

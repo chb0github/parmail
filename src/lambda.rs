@@ -20,7 +20,8 @@ pub async fn run_lambda() -> Result<()> {
     let handler = service_fn(move |event: LambdaEvent<S3Event>| {
         let s3 = s3_client.clone();
         let bedrock = bedrock_client.clone();
-        let store = Storage::local(&storage_dir);
+        let store = Storage::from_uri(&storage_dir, Some(s3.clone()))
+            .expect("Invalid STORAGE_DIR");
         async move { handle_s3_event(&s3, &bedrock, &store, event).await }
     });
 
@@ -45,7 +46,7 @@ async fn handle_s3_event(
         match process_s3_email(s3_client, bedrock_client, storage, bucket, key).await {
             Ok(manifest) => {
                 tracing::info!(
-                    count = manifest.items.len(),
+                    count = manifest.mail_pieces.len(),
                     bucket,
                     key,
                     "Successfully processed email"

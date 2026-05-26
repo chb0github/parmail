@@ -13,6 +13,7 @@ pub enum StorageDir {
 }
 
 impl StorageDir {
+    #[allow(dead_code)]
     pub fn as_local_path(&self) -> Option<&Path> {
         match self {
             StorageDir::Local(p) => Some(p),
@@ -53,9 +54,10 @@ impl Storage {
     }
 
     pub async fn ensure_email_dir(&self, info: &EmailInfo) -> Result<StorageDir> {
+        let email_id = info.id();
         match self {
             Storage::Local { base_dir } => {
-                let dir = base_dir.join(info.date_folder()).join(info.dir_name());
+                let dir = base_dir.join(&email_id);
                 fs::create_dir_all(&dir)
                     .await
                     .context("Failed to create email storage directory")?;
@@ -63,8 +65,8 @@ impl Storage {
             }
             Storage::S3 { prefix, .. } => {
                 let key_prefix = match prefix.is_empty() {
-                    true => format!("{}/{}", info.date_folder(), info.dir_name()),
-                    false => format!("{}/{}/{}", prefix, info.date_folder(), info.dir_name()),
+                    true => email_id,
+                    false => format!("{}/{}", prefix, email_id),
                 };
                 Ok(StorageDir::S3Key(key_prefix))
             }

@@ -14,6 +14,8 @@ resource "docker_registry_image" "parmail" {
   build {
     context    = abspath("${path.module}/..")
     dockerfile = abspath("${path.module}/../Dockerfile")
+    platform   = "linux/arm64"
+    no_cache   = true
   }
 
   triggers = {
