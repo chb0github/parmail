@@ -69,11 +69,11 @@ Requires `~/.netrc` with Gmail app password credentials (no spaces in the passwo
 ## Export
 
 ```bash
-# Export all manifests to a single Parquet file
+# Export all manifests to a single CSV (one row per mail piece)
 parmail export --data-dir ./data
 
-# Export as CSV
-parmail export --format csv --data-dir ./data --output ./data/parmail.csv
+# Specify output path
+parmail export --data-dir ./data --output ./parmail.csv
 ```
 
 ## Reports
