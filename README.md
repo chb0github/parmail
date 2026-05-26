@@ -56,29 +56,53 @@ parmail -v process samples/    # All processing steps
 parmail -vv process samples/   # All steps + JSON dump
 ```
 
-## Fetching emails
-
-Use the included script to bulk-download USPS Informed Delivery emails from Gmail via IMAP:
+## Scripts (bin/)
 
 ```bash
-./fetch_emails.sh -o samples/
+bin/fetch_emails.sh -o samples/        # Bulk-download emails from Gmail via IMAP
+bin/forward_emails.sh -r addr samples/ # Forward .eml files via SMTP
+bin/reports.sh -a                       # Generate all CSV reports
 ```
 
-Requires `~/.netrc` with Gmail app password credentials (no spaces in the password). Run `./fetch_emails.sh -h` for options.
+Requires `~/.netrc` with Gmail app password credentials (no spaces in the password). Run any script with `-h` for options.
+
+## Export
+
+```bash
+# Export all manifests to a single Parquet file
+parmail export --data-dir ./data
+
+# Export as CSV
+parmail export --format csv --data-dir ./data --output ./data/parmail.csv
+```
+
+## Reports
+
+Generate CSV reports from processed data:
+
+```bash
+bin/reports.sh -s    # Top senders by frequency
+bin/reports.sh -t    # Mail type breakdown (advertising, financial, etc.)
+bin/reports.sh -v    # Volume over time (monthly)
+bin/reports.sh -q    # Data quality (address resolution rates)
+bin/reports.sh -d    # Repeat senders (unsubscribe candidates)
+bin/reports.sh -a    # All of the above
+```
+
+Reports output to `./reports/` by default (override with `-o DIR`).
 
 ## Output structure
 
 ```
 data/
-  2025-07-25/
-    your-daily-digest-for-3f7a0aa0/
-      manifest.json
-      1114971734-054.jpg
-      1114971733-054.jpg
-  2025-10-18/
-    your-daily-digest-for-11414ccf/
-      manifest.json
-      1005799964-054.jpg
+  79a5cc32ea4d10cf/
+    manifest.json
+    1080623812-052.jpg
+    ra_0_1080623812-052.jpg
+  0119894404aaf877/
+    manifest.json
+    mailer-1200542208.jpg
+    content-1200542208.jpg
 ```
 
 ## Building
