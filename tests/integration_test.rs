@@ -128,7 +128,7 @@ mod email_parsing {
             println!("From: {}", parsed.info.from);
             println!("Date: {}", parsed.info.date);
             println!("Message-ID: {}", parsed.info.message_id);
-            println!("Dir name: {}", parsed.info.dir_name());
+            println!("ID: {}", parsed.info.id());
             println!("Date folder: {}", parsed.info.date_folder());
             println!();
 
@@ -179,9 +179,49 @@ mod email_parsing {
     }
 }
 
+mod s3_event_parsing {
+    use parmail::models::S3Event;
+    use std::path::PathBuf;
+
+    fn fixtures_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
+    }
+
+    #[test]
+    fn deserialize_single_record_event() {
+        let json = std::fs::read_to_string(fixtures_dir().join("s3_event_single.json")).unwrap();
+        let event: S3Event = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(event.records.len(), 1);
+        assert_eq!(event.records[0].s3.bucket.name, "parmail-692140489268");
+        assert_eq!(
+            event.records[0].s3.object.key,
+            "emails/03gk38n2o2i55pmbco4dl66kaiqhfic376bgaeo1"
+        );
+    }
+
+    #[test]
+    fn deserialize_multiple_record_event() {
+        let json = std::fs::read_to_string(fixtures_dir().join("s3_event_multiple.json")).unwrap();
+        let event: S3Event = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(event.records.len(), 2);
+        assert_eq!(event.records[0].s3.object.key, "emails/first-email-key");
+        assert_eq!(event.records[1].s3.object.key, "emails/second-email-key");
+    }
+
+    #[test]
+    fn extra_fields_are_ignored() {
+        let json = std::fs::read_to_string(fixtures_dir().join("s3_event_single.json")).unwrap();
+        let event: S3Event = serde_json::from_str(&json).unwrap();
+        assert_eq!(event.records.len(), 1);
+    }
+}
+
 mod storage {
     use parmail::email::EmailInfo;
-    use parmail::models::{EmailManifest, MailMetadata, MailType};
+    use chrono::NaiveDate;
+    use parmail::models::{AddressField, AddressStatus, ContentHash, EmailManifest, MailImage, MailPiece, MailType};
     use parmail::storage::Storage;
     use tempfile::TempDir;
 
@@ -223,25 +263,17 @@ mod storage {
     }
 
     #[tokio::test]
-    async fn email_dir_structure_uses_date_and_slug() {
+    async fn email_dir_uses_content_hash() {
         let tmp = TempDir::new().unwrap();
         let storage = Storage::local(tmp.path());
         let info = sample_email_info();
 
         let dir = storage.ensure_email_dir(&info).await.unwrap();
         let local_dir = dir.as_local_path().unwrap();
-        let dir_str = local_dir.to_string_lossy();
+        let dir_name = local_dir.file_name().unwrap().to_str().unwrap();
 
-        assert!(
-            dir_str.contains("2025-07-25"),
-            "Dir should contain date: {}",
-            dir_str
-        );
-        assert!(
-            dir_str.contains("your-daily-digest-for"),
-            "Dir should contain slug: {}",
-            dir_str
-        );
+        assert_eq!(dir_name, info.id());
+        assert_eq!(dir_name.len(), 16);
     }
 
     #[tokio::test]
@@ -253,21 +285,31 @@ mod storage {
         let dir = storage.ensure_email_dir(&info).await.unwrap();
 
         let manifest = EmailManifest {
+            id: "abc123def456".to_string(),
+            source_file: "test.eml".to_string(),
             email_subject: info.subject.clone(),
             email_from: info.from.clone(),
             email_date: info.date.clone(),
+            received_date: NaiveDate::from_ymd_opt(2025, 7, 25).unwrap(),
             email_message_id: info.message_id.clone(),
             processed_at: "2025-07-25T15:00:00Z".to_string(),
-            items: vec![MailMetadata {
+            to_address: AddressField { address: None, status: AddressStatus::Redacted },
+            mail_pieces: vec![MailPiece {
                 id: "test-id-123".to_string(),
-                image_filename: "test-001.jpg".to_string(),
-                image_sha256: "abc123".to_string(),
-                from_address: None,
-                to_address: None,
+                from_address: AddressField { address: None, status: AddressStatus::Unreadable },
                 mail_type: MailType::Advertising,
-                full_text: "BUY STUFF NOW".to_string(),
                 confidence: 0.92,
-                error: None,
+                postmark_date: None,
+                mailer: Some(MailImage {
+                    filename: "test-001.jpg".to_string(),
+                    hash: ContentHash {
+                        value: "abc123".to_string(),
+                        hash_type: "xxh3".to_string(),
+                    },
+                    full_text: "BUY STUFF NOW".to_string(),
+                    error: None,
+                }),
+                content: None,
             }],
         };
 
@@ -280,8 +322,9 @@ mod storage {
         let json_str = std::fs::read_to_string(&manifest_path).unwrap();
         let parsed: EmailManifest = serde_json::from_str(&json_str).unwrap();
         assert_eq!(parsed.email_subject, info.subject);
-        assert_eq!(parsed.items.len(), 1);
-        assert_eq!(parsed.items[0].image_filename, "test-001.jpg");
-        assert_eq!(parsed.items[0].full_text, "BUY STUFF NOW");
+        assert_eq!(parsed.mail_pieces.len(), 1);
+        let mailer = parsed.mail_pieces[0].mailer.as_ref().unwrap();
+        assert_eq!(mailer.filename, "test-001.jpg");
+        assert_eq!(mailer.full_text, "BUY STUFF NOW");
     }
 }

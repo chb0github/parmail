@@ -1,0 +1,120 @@
+{
+  "email_subject": "Your Daily Digest for Fri, Oct 22",
+  "email_from": "USPS Informed Delivery",
+  "email_date": "2021-10-22T09:14:28Z",
+  "received_date": "2021-10-22",
+  "email_message_id": "335743615.263857.1634912068303.JavaMail.prmin@eagnmncom1b38.usps.gov",
+  "processed_at": "2026-05-25T23:41:28.157497+00:00",
+  "to_address": {
+    "name": "Christian P. Bongiorno",
+    "street": "7223 Curtis Dr SE",
+    "city": "Snoqualmie",
+    "state": "WA",
+    "zip": "98065-9768"
+  },
+  "mail_pieces": [
+    {
+      "id": "79a5cc32ea4d10cf",
+      "from_address": {
+        "name": "Citibank",
+        "street": "PO Box 6072",
+        "city": "Sioux Falls",
+        "state": "SD",
+        "zip": "57117-6072"
+      },
+      "mail_type": "financial",
+      "confidence": 0.95,
+      "mailer": {
+        "filename": "1080623812-052.jpg",
+        "hash": {
+          "value": "8a751cc5d44c8533",
+          "type": "xxh3"
+        },
+        "full_text": "Citibank\nPO Box 6072, Sioux Falls, SD 57117-6072 | ELECTRONIC SERVICE REQUESTED\n\nSTANDARD\nU.S. POSTAGE\nPAID\nCITIBANK\n\nRELIEF FROM HIGH INTEREST WITH OUR LOWEST INTRO RATE\n\nYou've been pre-selected to apply\n\nChristian P. Bongiorno\n7223 Curtis Dr SE\nSnoqualmie, WA 98065-9768\n\n0%\nINTRO\nAPR\n\n21 MONTHS\non balance transfers from\ndate of first transfer\n\n12 MONTHS\non purchases from date\nof discount opening\n\nSee CD Disclosure inside for details."
+      },
+      "content": {
+        "filename": "ra_0_1080623812-052.jpg",
+        "hash": {
+          "value": "fe96c4c9928909d7",
+          "type": "xxh3"
+        },
+        "full_text": "",
+        "error": "Failed to parse tool response"
+      }
+    },
+    {
+      "id": "9c0d844df65ef027",
+      "from_address": null,
+      "mail_type": "unknown",
+      "confidence": 0.0,
+      "mailer": {
+        "filename": "1080646325-052.jpg",
+        "hash": {
+          "value": "d4a05f3f4fb3f05f",
+          "type": "xxh3"
+        },
+        "full_text": "",
+        "error": "Failed to parse tool response"
+      },
+      "content": null
+    },
+    {
+      "id": "bb7805d869e719a9",
+      "from_address": {
+        "name": "Return Mail Services",
+        "street": "<UNKNOWN>",
+        "city": "Edgewater",
+        "state": "NJ",
+        "zip": "07724"
+      },
+      "mail_type": "advertising",
+      "confidence": 0.85,
+      "mailer": {
+        "filename": "1080627623-052.jpg",
+        "hash": {
+          "value": "d3bd28186a0e9b9b",
+          "type": "xxh3"
+        },
+        "full_text": "Return Mail Services\nEdgewater, NJ 07724\n\nPRESORTED\nSTD\nU.S. POSTAGE PAID\nPERMIT NO. 915\n\nRESIDENT\n7223 CURTIS DR SE\nSNOQUALMIE WA 98065-9768\n\nCountry by country, we travel\nthe globe to bring the world's\nbest craftsmanship home to you.\n\nWWW.THE-CITIZENTRY.COM\n\n[barcode at bottom]"
+      },
+      "content": null
+    },
+    {
+      "id": "286ccbea3bd572d4",
+      "from_address": null,
+      "mail_type": "unknown",
+      "confidence": 0.0,
+      "mailer": {
+        "filename": "1080623208-052.jpg",
+        "hash": {
+          "value": "ab50c454fcde8904",
+          "type": "xxh3"
+        },
+        "full_text": "",
+        "error": "Failed to parse tool response"
+      },
+      "content": null
+    },
+    {
+      "id": "bb63dc4d13b7fb3e",
+      "from_address": {
+        "name": "First Technology Federal",
+        "street": "PO Box 105",
+        "city": "Snoqualmie",
+        "state": "WA",
+        "zip": "98065-9768"
+      },
+      "mail_type": "financial",
+      "confidence": 0.85,
+      "mailer": {
+        "filename": "1080627046-052.jpg",
+        "hash": {
+          "value": "21ca45ae82f9a203",
+          "type": "xxh3"
+        },
+        "full_text": "529 W. Golf Road\nArlington Heights, IL 60005\n\n[USPS Postmark - partially visible]\nFIRST TECHNOLOGY FEDERAL\nU.S. POSTAGE\nPAID\nPERMIT NO. 3003\n\nLender: First Technology Federal\nChristian Bongliorno\nPO Box 105\nSnoqualmie, WA 98065-9768\n\n[Barcode visible at bottom]\n\nPlease complete and return"
+      },
+      "content": null
+    }
+  ]
+}

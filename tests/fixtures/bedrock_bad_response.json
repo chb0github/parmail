@@ -1,0 +1,8 @@
+{
+  "from_address": {"name": "Some Corp", "street": null, "city": null, "state": null, "zip": null},
+  "to_address": null,
+  "mail_type": "other",
+  "full_text": "Some text here",
+  "confidence": "high",
+  "postmark_date": "not-a-date"
+}

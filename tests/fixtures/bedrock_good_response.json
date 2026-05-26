@@ -1,0 +1,8 @@
+{
+  "from_address": {"name": "Citibank", "street": "PO Box 6072", "city": "Sioux Falls", "state": "SD", "zip": "57117-6072"},
+  "to_address": {"name": "Christian P. Bongiorno", "street": "7223 Curtis Dr SE", "city": "Snoqualmie", "state": "WA", "zip": "98065-9768"},
+  "mail_type": "financial",
+  "full_text": "Citibank\nPO Box 6072, Sioux Falls, SD 57117-6072\nChristian P. Bongiorno\n7223 Curtis Dr SE\nSnoqualmie, WA 98065-9768",
+  "confidence": 0.95,
+  "postmark_date": "2021-10-20"
+}
