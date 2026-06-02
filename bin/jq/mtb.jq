@@ -1,13 +1,17 @@
-# Mail type breakdown (advertising/financial/personal/etc) with percentages
-[.[] | .mail_pieces[].mail_type] |
-length as $total |
-group_by(.) |
-map({
-  mail_type: .[0],
-  count: length,
-  pct: (length / $total * 100 | . * 10 | round / 10)
-}) |
-sort_by(-.count) |
-["mail_type,count,pct"] +
-[.[] | [.mail_type, .count, .pct] | @csv] |
-.[]
+include "shared";
+def describe: "Mail type breakdown (advertising/financial/personal/etc) with percentages";
+def execute:
+  group_by(.model_id) |
+  map(
+    .[0].model_id as $model |
+    [.[] | .mail_pieces[].mail_type] |
+    length as $total |
+    group_by(.) |
+    map({
+      model: $model,
+      mail_type: .[0],
+      count: length,
+      pct: pct(length; $total)
+    }) |
+    sort_by(-.count)
+  ) | flatten;
