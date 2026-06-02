@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 JQ_DIR="${SCRIPT_DIR}/jq"
 DATA_DIR="results"
-OUTPUT_DIR=""
+OUTPUT_DIR="reports"
 REPORTS=()
 
 available_reports() {
@@ -12,12 +12,12 @@ available_reports() {
 }
 
 usage() {
-  echo "Usage: $0 [-i data_dir] [-o output_dir] -r report [-r report]..."
+  echo "Usage: $0 [-i data_dir] [-o output_dir] [-r report]..."
   echo ""
   echo "Options:"
   echo "  -i DIR    Data directory containing manifest.json files (default: ./results)"
-  echo "  -o DIR    Write CSV files to this directory"
-  echo "  -r NAME   Report to generate (may specify multiple)"
+  echo "  -o DIR    Output directory for CSV files (default: ./reports)"
+  echo "  -r NAME   Report to generate (may specify multiple; default: all)"
   echo "  -h        Show this help"
   echo ""
   echo "Reports:"
@@ -26,8 +26,6 @@ usage() {
     desc=$(jq -nr "include \"$r\"; describe" -L "$JQ_DIR" --argjson prices '{}' 2>/dev/null || echo "")
     printf "  %-15s %s\n" "$r" "$desc"
   done
-  echo ""
-  echo "  all             Run all reports"
   exit 1
 }
 
@@ -45,65 +43,56 @@ parse_args() {
 
 run_report() {
   local report="${1:?run_report requires report name}"
-  local data="$2"
+  local datafile="${2:?run_report requires datafile}"
 
   if [[ ! -f "${JQ_DIR}/${report}.jq" ]]; then
     echo "ERROR: unknown report '$report' (no ${JQ_DIR}/${report}.jq)" >&2
     return 1
   fi
 
-  echo "$data" | jq -r \
+  jq -r \
     "include \"shared\";
      include \"$report\";
      execute | to_csv" \
     -L "$JQ_DIR" \
-    --argjson prices "$(cat "$JQ_DIR/prices.json")"
+    --argjson prices "$(cat "$JQ_DIR/prices.json")" \
+    "$datafile"
+}
+
+main() {
+  local data_dir="${1:?main requires data_dir}"
+  local output_dir="${2:?main requires output_dir}"
+  shift 2
+  local reports=("$@")
+
+  if [[ ! -d "$data_dir" ]]; then
+    echo "ERROR: data directory not found: $data_dir" >&2
+    exit 1
+  fi
+
+  local datafile
+  datafile=$(mktemp)
+  trap 'rm -f ${datafile}' EXIT
+  find "$data_dir" -name "manifest.json" -exec cat {} + | jq -s '.' > "$datafile"
+  echo "data: $datafile" >&2
+
+  mkdir -p "$output_dir"
+
+  for report in "${reports[@]}"; do
+    (run_report "$report" "$datafile" > "${output_dir}/${report}.csv") &
+  done
+  wait
+
+  for report in "${reports[@]}"; do
+    echo "$(cd "$output_dir" && pwd)/${report}.csv"
+  done
 }
 
 parse_args "$@"
 
 if [[ ${#REPORTS[@]} -eq 0 ]]; then
-  usage
+  while IFS= read -r r; do REPORTS+=("$r"); done < <(available_reports)
 fi
+mapfile -t REPORTS < <(printf '%s\n' "${REPORTS[@]}" | sort -u)
 
-# Expand "all" and deduplicate
-expanded=()
-for report in "${REPORTS[@]}"; do
-  if [[ "$report" == "all" ]]; then
-    while IFS= read -r r; do expanded+=("$r"); done < <(available_reports)
-  else
-    expanded+=("$report")
-  fi
-done
-REPORTS=($(printf '%s\n' "${expanded[@]}" | sort -u))
-
-# Load all manifests as a flat array
-if [[ ! -d "$DATA_DIR" ]]; then
-  echo "ERROR: data directory not found: $DATA_DIR" >&2
-  exit 1
-fi
-DATA=$(find "$DATA_DIR" -name "manifest.json" -exec cat {} + | jq -s '.')
-
-# Create output dir if needed
-if [[ -n "$OUTPUT_DIR" ]]; then
-  mkdir -p "$OUTPUT_DIR"
-fi
-
-# Run reports
-if [[ -n "$OUTPUT_DIR" ]]; then
-  for report in "${REPORTS[@]}"; do
-    (run_report "$report" "$DATA" > "${OUTPUT_DIR}/${report}.csv" \
-      && echo "${OUTPUT_DIR}/${report}.csv") &
-  done
-  wait
-else
-  for report in "${REPORTS[@]}"; do
-    if [[ ${#REPORTS[@]} -gt 1 ]]; then
-      echo "--- $report ---"
-    fi
-    run_report "$report" "$DATA"
-    if [[ ${#REPORTS[@]} -gt 1 ]]; then
-      echo ""
-    fi
-  done
-fi
+main "$DATA_DIR" "$OUTPUT_DIR" "${REPORTS[@]}"

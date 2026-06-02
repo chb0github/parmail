@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
 fn samples_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../emails")
 }
 
 fn sample_files() -> Vec<PathBuf> {
     std::fs::read_dir(samples_dir())
-        .expect("samples directory should exist")
+        .expect("emails directory should exist")
         .filter_map(|entry| {
             let entry = entry.ok()?;
             let path = entry.path();
@@ -221,7 +221,7 @@ mod s3_event_parsing {
 mod storage {
     use parmail::email::EmailInfo;
     use chrono::NaiveDate;
-    use parmail::models::{AddressField, AddressStatus, ContentHash, EmailManifest, MailImage, MailPiece, MailType};
+    use parmail::models::{AddressField, AddressStatus, ContentHash, EmailManifest, MailImage, MailPiece, TokenUsage};
     use parmail::storage::Storage;
     use tempfile::TempDir;
 
@@ -232,6 +232,39 @@ mod storage {
             date: "2025-07-25T14:24:32Z".to_string(),
             message_id: "20250725142432.612fb5af682bdb12@email.informeddelivery.usps.com"
                 .to_string(),
+        }
+    }
+
+    fn sample_manifest(info: &EmailInfo) -> EmailManifest {
+        EmailManifest {
+            id: info.id(),
+            model_id: "us.anthropic.claude-haiku-4-5-20251001-v1:0".to_string(),
+            source_file: "test.eml".to_string(),
+            email_subject: info.subject.clone(),
+            email_from: info.from.clone(),
+            email_date: info.date.clone(),
+            received_date: NaiveDate::from_ymd_opt(2025, 7, 25).unwrap(),
+            email_message_id: info.message_id.clone(),
+            processed_at: "2025-07-25T15:00:00Z".to_string(),
+            to_address: AddressField { address: None, status: AddressStatus::Redacted },
+            mail_pieces: vec![MailPiece {
+                id: "test-id-123".to_string(),
+                from_address: AddressField { address: None, status: AddressStatus::Unreadable },
+                mail_type: "advertising".to_string(),
+                confidence: 0.92,
+                postmark_date: None,
+                mailer: Some(MailImage {
+                    filename: "test-001.jpg".to_string(),
+                    hash: ContentHash {
+                        value: "abc123".to_string(),
+                        hash_type: "xxh3".to_string(),
+                    },
+                    full_text: "BUY STUFF NOW".to_string(),
+                    error: None,
+                }),
+                content: None,
+            }],
+            usage: TokenUsage { input_tokens: 100, output_tokens: 50 },
         }
     }
 
@@ -284,34 +317,7 @@ mod storage {
 
         let dir = storage.ensure_email_dir(&info).await.unwrap();
 
-        let manifest = EmailManifest {
-            id: "abc123def456".to_string(),
-            source_file: "test.eml".to_string(),
-            email_subject: info.subject.clone(),
-            email_from: info.from.clone(),
-            email_date: info.date.clone(),
-            received_date: NaiveDate::from_ymd_opt(2025, 7, 25).unwrap(),
-            email_message_id: info.message_id.clone(),
-            processed_at: "2025-07-25T15:00:00Z".to_string(),
-            to_address: AddressField { address: None, status: AddressStatus::Redacted },
-            mail_pieces: vec![MailPiece {
-                id: "test-id-123".to_string(),
-                from_address: AddressField { address: None, status: AddressStatus::Unreadable },
-                mail_type: MailType::Advertising,
-                confidence: 0.92,
-                postmark_date: None,
-                mailer: Some(MailImage {
-                    filename: "test-001.jpg".to_string(),
-                    hash: ContentHash {
-                        value: "abc123".to_string(),
-                        hash_type: "xxh3".to_string(),
-                    },
-                    full_text: "BUY STUFF NOW".to_string(),
-                    error: None,
-                }),
-                content: None,
-            }],
-        };
+        let manifest = sample_manifest(&info);
 
         storage.store_manifest(&dir, &manifest).await.unwrap();
 
@@ -326,5 +332,46 @@ mod storage {
         let mailer = parsed.mail_pieces[0].mailer.as_ref().unwrap();
         assert_eq!(mailer.filename, "test-001.jpg");
         assert_eq!(mailer.full_text, "BUY STUFF NOW");
+    }
+
+    #[tokio::test]
+    async fn load_valid_manifest_returns_some_when_no_errors() {
+        let tmp = TempDir::new().unwrap();
+        let storage = Storage::local(tmp.path());
+        let info = sample_email_info();
+
+        let dir = storage.ensure_email_dir(&info).await.unwrap();
+        let manifest = sample_manifest(&info);
+        storage.store_manifest(&dir, &manifest).await.unwrap();
+
+        let loaded = storage.load_valid_manifest(&info).await;
+        assert!(loaded.is_some());
+        assert_eq!(loaded.unwrap().id, info.id());
+    }
+
+    #[tokio::test]
+    async fn load_valid_manifest_returns_none_when_errors() {
+        let tmp = TempDir::new().unwrap();
+        let storage = Storage::local(tmp.path());
+        let info = sample_email_info();
+
+        let dir = storage.ensure_email_dir(&info).await.unwrap();
+        let mut manifest = sample_manifest(&info);
+        manifest.mail_pieces[0].mailer.as_mut().unwrap().error =
+            Some("Bedrock converse API call failed after retries".to_string());
+        storage.store_manifest(&dir, &manifest).await.unwrap();
+
+        let loaded = storage.load_valid_manifest(&info).await;
+        assert!(loaded.is_none());
+    }
+
+    #[tokio::test]
+    async fn load_valid_manifest_returns_none_when_missing() {
+        let tmp = TempDir::new().unwrap();
+        let storage = Storage::local(tmp.path());
+        let info = sample_email_info();
+
+        let loaded = storage.load_valid_manifest(&info).await;
+        assert!(loaded.is_none());
     }
 }

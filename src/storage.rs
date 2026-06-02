@@ -104,6 +104,31 @@ impl Storage {
         }
     }
 
+    /// Returns the existing manifest if it exists and has no analysis errors.
+    pub async fn load_valid_manifest(&self, info: &EmailInfo) -> Option<EmailManifest> {
+        let email_id = info.id();
+        let manifest = match self {
+            Storage::Local { base_dir } => {
+                let path = base_dir.join(&email_id).join("manifest.json");
+                let data = fs::read_to_string(&path).await.ok()?;
+                serde_json::from_str::<EmailManifest>(&data).ok()?
+            }
+            Storage::S3 { client, bucket, prefix, .. } => {
+                let key = match prefix.is_empty() {
+                    true => format!("{email_id}/manifest.json"),
+                    false => format!("{prefix}/{email_id}/manifest.json"),
+                };
+                let resp = client.get_object().bucket(bucket).key(&key).send().await.ok()?;
+                let bytes = resp.body.collect().await.ok()?;
+                serde_json::from_slice::<EmailManifest>(&bytes.into_bytes()).ok()?
+            }
+        };
+        match manifest.mail_pieces.iter().all(|p| p.mailer.as_ref().is_none_or(|m| m.error.is_none())) {
+            true => Some(manifest),
+            false => None,
+        }
+    }
+
     pub async fn store_manifest(&self, dir: &StorageDir, manifest: &EmailManifest) -> Result<()> {
         let json = serde_json::to_string_pretty(manifest)?;
 

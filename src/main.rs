@@ -14,6 +14,7 @@ use clap::{Parser, Subcommand};
 use futures::stream::{self, StreamExt};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use analysis::ModelConfig;
 use input::{fetch_email, resolve_sources};
 use output::{Output, Verbosity};
 
@@ -39,11 +40,20 @@ enum Commands {
     /// Process .eml files from local paths, directories, or s3:// URIs
     Process {
         /// Directory or s3://bucket/prefix to store images and metadata
-        #[arg(short, long, default_value = "./data")]
-        storage_dir: String,
+        #[arg(short, long)]
+        storage_dir: Option<String>,
         /// Concurrent email processing limit
-        #[arg(short, long, default_value = "10")]
+        #[arg(short, long, default_value = "1")]
         concurrency: usize,
+        /// Bedrock model ID to use for analysis
+        #[arg(short, long)]
+        model: Option<String>,
+        /// Path to models config file
+        #[arg(long, default_value = "models.default.json")]
+        models_file: String,
+        /// Save raw model responses to disk for debugging
+        #[arg(long, default_value = "false")]
+        save_responses: bool,
         /// Paths to .eml files, directories, or s3://bucket/prefix URIs
         #[arg(required = true, trailing_var_arg = true)]
         paths: Vec<String>,
@@ -72,7 +82,19 @@ async fn main() -> Result<()> {
             validate::validate_aws(&bedrock_client).await?;
             eprintln!("All AWS resources validated successfully.");
         }
-        Commands::Process { paths, storage_dir, concurrency } => {
+        Commands::Process { paths, storage_dir, concurrency, model, models_file, save_responses } => {
+            let storage_dir = match (&storage_dir, &model) {
+                (Some(dir), _) => dir.clone(),
+                (None, Some(id)) => {
+                    let short = id.rsplit('.').next().unwrap_or(id).split(':').next().unwrap_or(id);
+                    format!("results/{short}")
+                }
+                (None, None) => "./data".to_string(),
+            };
+            let model_config = match model {
+                Some(id) => ModelConfig::load(&models_file, &id, save_responses, &storage_dir)?,
+                None => ModelConfig::default_config(&storage_dir),
+            };
             let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
             let bedrock_client = aws_sdk_bedrockruntime::Client::new(&config);
 
@@ -93,6 +115,7 @@ async fn main() -> Result<()> {
             stream::iter(sources.iter())
                 .for_each_concurrent(concurrency, |source| {
                     let bedrock = &bedrock_client;
+                    let model_cfg = &model_config;
                     let store = &storage;
                     let s3 = &s3_client;
                     let out = &out;
@@ -108,7 +131,7 @@ async fn main() -> Result<()> {
                             }
                         };
 
-                        match processor::process_raw_email(bedrock, store, &name, &raw).await {
+                        match processor::process_raw_email(bedrock, model_cfg, store, &name, &raw).await {
                             Ok(manifest) => {
                                 out.file_done(&manifest.received_date.to_string(), &manifest.email_message_id, manifest.mail_pieces.len(), true);
                             }
