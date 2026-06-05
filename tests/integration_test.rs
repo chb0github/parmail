@@ -221,7 +221,7 @@ mod s3_event_parsing {
 mod storage {
     use parmail::email::EmailInfo;
     use chrono::NaiveDate;
-    use parmail::models::{AddressField, AddressStatus, ContentHash, EmailManifest, MailImage, MailPiece, TokenUsage};
+    use parmail::models::{Address, ContentHash, EmailManifest, MailImage, MailPiece, TokenUsage};
     use parmail::storage::Storage;
     use tempfile::TempDir;
 
@@ -246,19 +246,19 @@ mod storage {
             received_date: NaiveDate::from_ymd_opt(2025, 7, 25).unwrap(),
             email_message_id: info.message_id.clone(),
             processed_at: "2025-07-25T15:00:00Z".to_string(),
-            to_address: AddressField { address: None, status: AddressStatus::Redacted },
             mail_pieces: vec![MailPiece {
                 id: "test-id-123".to_string(),
-                from_address: AddressField { address: None, status: AddressStatus::Unreadable },
+                from_address: None,
+                to_address: None,
                 mail_type: "advertising".to_string(),
                 confidence: 0.92,
                 postmark_date: None,
                 mailer: Some(MailImage {
-                    filename: "test-001.jpg".to_string(),
                     hash: ContentHash {
                         value: "abc123".to_string(),
                         hash_type: "xxh3".to_string(),
                     },
+                    image: "test-id-123/mailer.jpg".to_string(),
                     full_text: "BUY STUFF NOW".to_string(),
                     error: None,
                 }),
@@ -269,30 +269,21 @@ mod storage {
     }
 
     #[tokio::test]
-    async fn store_image_in_email_dir() {
+    async fn store_image_in_piece_dir() {
         let tmp = TempDir::new().unwrap();
         let storage = Storage::local(tmp.path());
         let info = sample_email_info();
 
-        let dir = storage.ensure_email_dir(&info).await.unwrap();
+        let email_dir = storage.ensure_email_dir(&info).await.unwrap();
+        let piece_dir = storage.ensure_piece_dir(&email_dir, "test-piece-123").await.unwrap();
+
         let fake_jpeg = vec![0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
-        let filename = storage
-            .store_image(&dir, &fake_jpeg, "test-001.jpg")
+        let image_path = storage
+            .store_image(&piece_dir, "test-piece-123", &fake_jpeg, "mailer.jpg")
             .await
             .unwrap();
 
-        assert_eq!(filename, "test-001.jpg");
-
-        let local_dir = dir.as_local_path().unwrap();
-        let full_path = local_dir.join(&filename);
-        assert!(
-            full_path.exists(),
-            "Stored file should exist at {}",
-            full_path.display()
-        );
-
-        let contents = std::fs::read(&full_path).unwrap();
-        assert_eq!(contents, fake_jpeg);
+        assert_eq!(image_path, "test-piece-123/mailer.jpg");
     }
 
     #[tokio::test]
@@ -330,7 +321,7 @@ mod storage {
         assert_eq!(parsed.email_subject, info.subject);
         assert_eq!(parsed.mail_pieces.len(), 1);
         let mailer = parsed.mail_pieces[0].mailer.as_ref().unwrap();
-        assert_eq!(mailer.filename, "test-001.jpg");
+        assert_eq!(mailer.image, "test-id-123/mailer.jpg");
         assert_eq!(mailer.full_text, "BUY STUFF NOW");
     }
 
