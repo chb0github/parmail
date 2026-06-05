@@ -90,10 +90,9 @@ async fn process_emails(
 
     let needs_s3 = paths.iter().any(|p| p.starts_with("s3://"))
         || storage_dir.starts_with("s3://");
-    let s3_client = if needs_s3 {
-        Some(S3Client::new(&config))
-    } else {
-        None
+    let s3_client = match needs_s3 {
+        true => Some(S3Client::new(&config)),
+        false => None,
     };
 
     let storage = Storage::from_uri(&storage_dir, s3_client.clone())?;
