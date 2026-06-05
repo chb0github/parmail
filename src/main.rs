@@ -9,14 +9,16 @@ mod storage;
 mod validate;
 
 use anyhow::Result;
+use aws_sdk_bedrockruntime::Client as BedrockClient;
 use aws_sdk_s3::Client as S3Client;
 use clap::{Parser, Subcommand};
 use futures::stream::{self, StreamExt};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use analysis::ModelConfig;
-use input::{fetch_email, resolve_sources};
+use input::{fetch_email, resolve_sources, EmailSource};
 use output::{Output, Verbosity};
+use storage::Storage;
 
 #[derive(Parser)]
 #[command(name = "parmail", about = "USPS Informed Delivery mail image processor")]
@@ -60,6 +62,88 @@ enum Commands {
     },
 }
 
+async fn process_emails(
+    paths: Vec<String>,
+    storage_dir: Option<String>,
+    concurrency: usize,
+    model: Option<String>,
+    models_file: String,
+    save_responses: bool,
+    verbosity: Verbosity,
+) -> Result<()> {
+    let storage_dir = match (&storage_dir, &model) {
+        (Some(dir), _) => dir.clone(),
+        (None, Some(id)) => {
+            let short = id.rsplit('.').next().unwrap_or(id).split(':').next().unwrap_or(id);
+            format!("results/{short}")
+        }
+        (None, None) => "./data".to_string(),
+    };
+
+    let model_config = match model {
+        Some(id) => ModelConfig::load(&models_file, &id, save_responses, &storage_dir)?,
+        None => ModelConfig::default_config(&storage_dir),
+    };
+
+    let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+    let bedrock_client = BedrockClient::new(&config);
+
+    let needs_s3 = paths.iter().any(|p| p.starts_with("s3://"))
+        || storage_dir.starts_with("s3://");
+    let s3_client = if needs_s3 {
+        Some(S3Client::new(&config))
+    } else {
+        None
+    };
+
+    let storage = Storage::from_uri(&storage_dir, s3_client.clone())?;
+    let sources = resolve_sources(&paths, s3_client.as_ref()).await?;
+    let out = Output::new(verbosity, std::io::IsTerminal::is_terminal(&std::io::stderr()), sources.len() as u64);
+    let errors = AtomicU64::new(0);
+    let total = sources.len() as u64;
+
+    process_sources(&bedrock_client, &model_config, &storage, &s3_client, &sources, &out, &errors, concurrency).await;
+
+    out.finish(total, errors.load(Ordering::Relaxed));
+    Ok(())
+}
+
+async fn process_sources(
+    bedrock_client: &BedrockClient,
+    model_config: &ModelConfig,
+    storage: &Storage,
+    s3_client: &Option<S3Client>,
+    sources: &[EmailSource],
+    out: &Output,
+    errors: &AtomicU64,
+    concurrency: usize,
+) {
+    stream::iter(sources.iter())
+        .for_each_concurrent(concurrency, |source| async move {
+            let name = source.short_name();
+            let raw = match fetch_email(source, s3_client.as_ref()).await {
+                Ok(data) => data,
+                Err(e) => {
+                    out.error(&format!("{source}: {e}"));
+                    errors.fetch_add(1, Ordering::Relaxed);
+                    return;
+                }
+            };
+
+            match processor::process_raw_email(bedrock_client, model_config, storage, &name, &raw).await {
+                Ok(manifest) => {
+                    out.file_done(&manifest.received_date.to_string(), &manifest.email_message_id, manifest.mail_pieces.len(), true);
+                }
+                Err(e) => {
+                    out.file_done(&name, "", 0, false);
+                    out.error(&format!("{source}: {e}"));
+                    errors.fetch_add(1, Ordering::Relaxed);
+                }
+            }
+        })
+        .await;
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
@@ -83,69 +167,7 @@ async fn main() -> Result<()> {
             eprintln!("All AWS resources validated successfully.");
         }
         Commands::Process { paths, storage_dir, concurrency, model, models_file, save_responses } => {
-            let storage_dir = match (&storage_dir, &model) {
-                (Some(dir), _) => dir.clone(),
-                (None, Some(id)) => {
-                    let short = id.rsplit('.').next().unwrap_or(id).split(':').next().unwrap_or(id);
-                    format!("results/{short}")
-                }
-                (None, None) => "./data".to_string(),
-            };
-            let model_config = match model {
-                Some(id) => ModelConfig::load(&models_file, &id, save_responses, &storage_dir)?,
-                None => ModelConfig::default_config(&storage_dir),
-            };
-            let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
-            let bedrock_client = aws_sdk_bedrockruntime::Client::new(&config);
-
-            let needs_s3 = paths.iter().any(|p| p.starts_with("s3://"))
-                || storage_dir.starts_with("s3://");
-            let s3_client = if needs_s3 {
-                Some(S3Client::new(&config))
-            } else {
-                None
-            };
-
-            let storage = storage::Storage::from_uri(&storage_dir, s3_client.clone())?;
-            let sources = resolve_sources(&paths, s3_client.as_ref()).await?;
-            let out = Output::new(verbosity, std::io::IsTerminal::is_terminal(&std::io::stderr()), sources.len() as u64);
-            let errors = AtomicU64::new(0);
-            let total = sources.len() as u64;
-
-            stream::iter(sources.iter())
-                .for_each_concurrent(concurrency, |source| {
-                    let bedrock = &bedrock_client;
-                    let model_cfg = &model_config;
-                    let store = &storage;
-                    let s3 = &s3_client;
-                    let out = &out;
-                    let errors = &errors;
-                    async move {
-                        let name = source.short_name();
-                        let raw = match fetch_email(source, s3.as_ref()).await {
-                            Ok(data) => data,
-                            Err(e) => {
-                                out.error(&format!("{source}: {e}"));
-                                errors.fetch_add(1, Ordering::Relaxed);
-                                return;
-                            }
-                        };
-
-                        match processor::process_raw_email(bedrock, model_cfg, store, &name, &raw).await {
-                            Ok(manifest) => {
-                                out.file_done(&manifest.received_date.to_string(), &manifest.email_message_id, manifest.mail_pieces.len(), true);
-                            }
-                            Err(e) => {
-                                out.file_done(&name, "", 0, false);
-                                out.error(&format!("{source}: {e}"));
-                                errors.fetch_add(1, Ordering::Relaxed);
-                            }
-                        }
-                    }
-                })
-                .await;
-
-            out.finish(total, errors.load(Ordering::Relaxed));
+            process_emails(paths, storage_dir, concurrency, model, models_file, save_responses, verbosity).await?;
         }
     }
 
