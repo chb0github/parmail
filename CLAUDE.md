@@ -63,6 +63,20 @@ Send SMS updates via CallCentric (from 425-394-2504 to user's Google Fi 703-975-
 
 **Important:** Never commit the `results/` or `emails_retry/` directories to git. These contain generated output and local email files that should not be in version control.
 
+### Full Batch Processing
+
+Process all emails from scratch or with resume support:
+
+```bash
+# Process all emails in directory (skips existing valid manifests)
+PATH="/usr/bin:/bin:$PATH" ./target/release/parmail process \
+  --model "us.anthropic.claude-haiku-4-5-20251001-v1:0" \
+  --storage-dir "results" \
+  -c 8 emails/
+```
+
+**Performance:** Full batch of 3,158 emails takes ~14 minutes at concurrency 8 with Haiku 4.5. Resume logic skips emails with valid manifests, so subsequent runs are much faster.
+
 ### Full Reconciliation (Rare)
 
 When emails have processing errors or S3 output/ needs to be rebuilt from scratch:
