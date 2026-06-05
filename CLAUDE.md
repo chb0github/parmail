@@ -2,7 +2,9 @@
 
 ## Architecture
 
-Inbound emails arrive via SES → SES drops raw .eml into S3 (`emails/` prefix) → S3 notification triggers the Lambda → Lambda processes them and writes output to S3 (`output/` prefix).
+Inbound emails arrive via SES → SES stores raw email (no extension, message ID as key) in S3 (`emails/` prefix) → S3 notification triggers the Lambda → Lambda processes them and writes output to S3 (`output/` prefix).
+
+**Important:** SES stores emails in S3 without file extensions. The processor accepts any file format and does not filter by extension.
 
 ### Unified Processing Pipeline
 
