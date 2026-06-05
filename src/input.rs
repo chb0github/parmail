@@ -18,29 +18,10 @@ pub async fn get_email(source: &str) -> Result<Vec<u8>> {
         Uri::S3 { bucket, prefix } => {
             let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
             let client = S3Client::new(&config);
-            fetch_from_s3(&client, &bucket, &prefix).await
+            let parmail_client = ParmailS3Client::new(client, bucket);
+            parmail_client.get_data(&prefix).await
         }
     }
-}
-
-async fn fetch_from_s3(client: &S3Client, bucket: &str, key: &str) -> Result<Vec<u8>> {
-    let resp = client
-        .get_object()
-        .bucket(bucket)
-        .key(key)
-        .send()
-        .await
-        .with_context(|| format!("Failed to fetch s3://{bucket}/{key}"))?;
-
-    let bytes = resp
-        .body
-        .collect()
-        .await
-        .context("Failed to read S3 object body")?
-        .into_bytes()
-        .to_vec();
-
-    Ok(bytes)
 }
 
 #[derive(Debug, Clone)]
@@ -112,7 +93,8 @@ pub async fn fetch_email(source: &EmailSource, s3_client: Option<&S3Client>) -> 
         }
         EmailSource::S3 { bucket, key } => {
             let client = s3_client.context("S3 path but AWS is not configured")?;
-            fetch_from_s3(client, bucket, key).await
+            let parmail_client = ParmailS3Client::new(client.clone(), bucket.clone());
+            parmail_client.get_data(key).await
         }
     }
 }
