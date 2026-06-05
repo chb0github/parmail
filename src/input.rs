@@ -4,6 +4,60 @@ use std::path::{Path, PathBuf};
 
 use crate::s3::ParmailS3Client;
 
+/// Manages email source resolution and fetching
+pub struct EmailFetcher {
+    s3_client: Option<S3Client>,
+}
+
+impl EmailFetcher {
+    pub fn new(s3_client: Option<S3Client>) -> Self {
+        Self { s3_client }
+    }
+
+    pub async fn resolve_sources(&self, paths: &[String]) -> Result<Vec<EmailSource>> {
+        let mut sources = Vec::new();
+
+        for p in paths {
+            match parse_uri(p) {
+                Uri::S3 { bucket, prefix } => {
+                    let client = self.s3_client.as_ref().context("S3 path provided but AWS is not configured")?;
+                    let parmail_client = ParmailS3Client::new(client.clone(), bucket.clone());
+                    let keys = parmail_client.list_objects_with_prefix(&prefix).await?;
+                    for key in keys {
+                        sources.push(EmailSource::S3 { bucket: bucket.clone(), key });
+                    }
+                }
+                Uri::Local(path) => {
+                    match (path.is_file(), path.is_dir()) {
+                        (true, _) => sources.push(EmailSource::Local(path)),
+                        (_, true) => walk_dir(&path, &mut sources)?,
+                        _ => anyhow::bail!("Path does not exist: {}", path.display()),
+                    }
+                }
+            }
+        }
+
+        sources.sort_by(|a, b| a.to_string().cmp(&b.to_string()));
+        sources.dedup_by(|a, b| a.to_string() == b.to_string());
+        Ok(sources)
+    }
+
+    pub async fn fetch_email(&self, source: &EmailSource) -> Result<Vec<u8>> {
+        match source {
+            EmailSource::Local(path) => {
+                tokio::fs::read(path)
+                    .await
+                    .with_context(|| format!("Failed to read {}", path.display()))
+            }
+            EmailSource::S3 { bucket, key } => {
+                let client = self.s3_client.as_ref().context("S3 path but AWS is not configured")?;
+                let parmail_client = ParmailS3Client::new(client.clone(), bucket.clone());
+                parmail_client.get_data(key).await
+            }
+        }
+    }
+}
+
 /// Fetch email data from a source string (file path or s3:// URI)
 /// Returns error if source doesn't exist, otherwise always returns data
 pub async fn get_email(source: &str) -> Result<Vec<u8>> {
@@ -56,47 +110,15 @@ impl EmailSource {
     }
 }
 
+// Legacy functions for backward compatibility - prefer using EmailFetcher
 pub async fn resolve_sources(paths: &[String], s3_client: Option<&S3Client>) -> Result<Vec<EmailSource>> {
-    let mut sources = Vec::new();
-
-    for p in paths {
-        match parse_uri(p) {
-            Uri::S3 { bucket, prefix } => {
-                let client = s3_client.context("S3 path provided but AWS is not configured")?;
-                let parmail_client = ParmailS3Client::new(client.clone(), bucket.clone());
-                let keys = parmail_client.list_objects_with_prefix(&prefix).await?;
-                for key in keys {
-                    sources.push(EmailSource::S3 { bucket: bucket.clone(), key });
-                }
-            }
-            Uri::Local(path) => {
-                match (path.is_file(), path.is_dir()) {
-                    (true, _) => sources.push(EmailSource::Local(path)),
-                    (_, true) => walk_dir(&path, &mut sources)?,
-                    _ => anyhow::bail!("Path does not exist: {}", path.display()),
-                }
-            }
-        }
-    }
-
-    sources.sort_by(|a, b| a.to_string().cmp(&b.to_string()));
-    sources.dedup_by(|a, b| a.to_string() == b.to_string());
-    Ok(sources)
+    let fetcher = EmailFetcher::new(s3_client.cloned());
+    fetcher.resolve_sources(paths).await
 }
 
 pub async fn fetch_email(source: &EmailSource, s3_client: Option<&S3Client>) -> Result<Vec<u8>> {
-    match source {
-        EmailSource::Local(path) => {
-            tokio::fs::read(path)
-                .await
-                .with_context(|| format!("Failed to read {}", path.display()))
-        }
-        EmailSource::S3 { bucket, key } => {
-            let client = s3_client.context("S3 path but AWS is not configured")?;
-            let parmail_client = ParmailS3Client::new(client.clone(), bucket.clone());
-            parmail_client.get_data(key).await
-        }
-    }
+    let fetcher = EmailFetcher::new(s3_client.cloned());
+    fetcher.fetch_email(source).await
 }
 
 enum Uri {
