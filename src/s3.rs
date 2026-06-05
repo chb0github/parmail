@@ -48,6 +48,10 @@ impl ParmailS3Client {
         Ok(keys)
     }
 
+    pub async fn list_emails(&self) -> Result<Vec<String>> {
+        self.list_objects("emails/").await
+    }
+
     /// Get object data from S3 by key
     /// Returns error if object doesn't exist, otherwise always returns data
     pub async fn get_data(&self, key: &str) -> Result<Vec<u8>> {
