@@ -26,8 +26,9 @@ mod email_parsing {
     #[test]
     fn samples_directory_exists_and_has_eml_files() {
         let files = sample_files();
-        assert!(!files.is_empty(), "No .eml files found in samples/");
+        assert!(!files.is_empty(), "No .eml files found in ../emails/ - run bin/generate_test_emails.py");
         println!("Found {} sample emails", files.len());
+        assert!(files.len() >= 3, "Expected at least 3 test emails (mailer_and_content, mailer_only, no_images)");
     }
 
     #[test]
@@ -45,49 +46,49 @@ mod email_parsing {
     }
 
     #[test]
-    fn daily_digest_contains_images() {
-        let digest_files: Vec<_> = sample_files()
-            .into_iter()
-            .filter(|p| {
-                p.file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .contains("Daily Digest")
-            })
-            .collect();
+    fn mailer_and_content_email_has_both_images() {
+        let path = samples_dir().join("mailer_and_content.eml");
+        assert!(path.exists(), "mailer_and_content.eml should exist");
 
-        assert!(
-            !digest_files.is_empty(),
-            "No Daily Digest sample emails found"
-        );
+        let raw = std::fs::read(&path).unwrap();
+        let parsed = parse_email(&raw).unwrap();
 
-        for path in digest_files {
-            let raw = std::fs::read(&path).unwrap();
-            let parsed = parse_email(&raw).unwrap();
+        println!("mailer_and_content.eml: extracted {} images", parsed.images.len());
+        assert_eq!(parsed.images.len(), 2, "Should have exactly 2 images (mailer + content)");
 
-            println!(
-                "{}: extracted {} images",
-                path.file_name().unwrap().to_str().unwrap(),
-                parsed.images.len()
-            );
-
+        for img in &parsed.images {
             assert!(
-                !parsed.images.is_empty(),
-                "Daily Digest email {} should contain at least one image",
-                path.display()
+                img.content_type.starts_with("image/"),
+                "Expected image content type, got: {}",
+                img.content_type
             );
-
-            for img in &parsed.images {
-                assert!(
-                    img.content_type.starts_with("image/"),
-                    "Expected image content type, got: {}",
-                    img.content_type
-                );
-                assert!(!img.data.is_empty(), "Image {} has empty data", img.filename);
-                assert!(!img.filename.is_empty(), "Image should have a filename");
-            }
+            assert!(!img.data.is_empty(), "Image {} has empty data", img.filename);
+            assert!(!img.filename.is_empty(), "Image should have a filename");
         }
+    }
+
+    #[test]
+    fn mailer_only_email_has_one_image() {
+        let path = samples_dir().join("mailer_only.eml");
+        assert!(path.exists(), "mailer_only.eml should exist");
+
+        let raw = std::fs::read(&path).unwrap();
+        let parsed = parse_email(&raw).unwrap();
+
+        println!("mailer_only.eml: extracted {} images", parsed.images.len());
+        assert_eq!(parsed.images.len(), 1, "Should have exactly 1 image (mailer only)");
+    }
+
+    #[test]
+    fn no_images_email_has_zero_images() {
+        let path = samples_dir().join("no_images.eml");
+        assert!(path.exists(), "no_images.eml should exist");
+
+        let raw = std::fs::read(&path).unwrap();
+        let parsed = parse_email(&raw).unwrap();
+
+        println!("no_images.eml: extracted {} images", parsed.images.len());
+        assert_eq!(parsed.images.len(), 0, "Should have 0 images");
     }
 
     #[test]
@@ -109,62 +110,23 @@ mod email_parsing {
 
     #[test]
     fn email_info_extracted_correctly() {
-        let digest_files: Vec<_> = sample_files()
-            .into_iter()
-            .filter(|p| {
-                p.file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .contains("Daily Digest")
-            })
-            .collect();
+        let path = samples_dir().join("mailer_and_content.eml");
+        let raw = std::fs::read(&path).unwrap();
+        let parsed = parse_email(&raw).unwrap();
 
-        for path in digest_files {
-            let raw = std::fs::read(&path).unwrap();
-            let parsed = parse_email(&raw).unwrap();
+        println!("Subject: {}", parsed.info.subject);
+        println!("From: {}", parsed.info.from);
+        println!("Date: {}", parsed.info.date);
+        println!("Message-ID: {}", parsed.info.message_id);
+        println!("ID: {}", parsed.info.id());
+        println!("Date folder: {}", parsed.info.date_folder());
 
-            println!("Subject: {}", parsed.info.subject);
-            println!("From: {}", parsed.info.from);
-            println!("Date: {}", parsed.info.date);
-            println!("Message-ID: {}", parsed.info.message_id);
-            println!("ID: {}", parsed.info.id());
-            println!("Date folder: {}", parsed.info.date_folder());
-            println!();
-
-            assert!(
-                parsed.info.subject.contains("Daily Digest"),
-                "Subject should contain 'Daily Digest', got: {}",
-                parsed.info.subject
-            );
-            assert_ne!(parsed.info.from, "unknown");
-            assert_ne!(parsed.info.message_id, "unknown");
-            assert!(parsed.info.date_folder().len() == 10); // YYYY-MM-DD
-        }
+        assert!(parsed.info.subject.contains("Daily Digest"));
+        assert!(parsed.info.from.contains("USPS"));
+        assert_ne!(parsed.info.message_id, "unknown");
+        assert_eq!(parsed.info.date_folder().len(), 10); // YYYY-MM-DD
     }
 
-    #[test]
-    fn expected_delivery_email_has_no_mail_images() {
-        let expected_delivery: Vec<_> = sample_files()
-            .into_iter()
-            .filter(|p| {
-                p.file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .contains("Expected Delivery")
-            })
-            .collect();
-
-        for path in expected_delivery {
-            let raw = std::fs::read(&path).unwrap();
-            let parsed = parse_email(&raw).unwrap();
-            println!(
-                "Expected Delivery email: {} images found",
-                parsed.images.len()
-            );
-        }
-    }
 
     #[test]
     fn image_filenames_are_non_empty() {
