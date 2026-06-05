@@ -166,13 +166,27 @@ pub fn group_images_by_piece(images: Vec<ExtractedImage>) -> IndexMap<String, Ve
     groups
 }
 
-/// Extract mailer and content images for a single mail piece
-/// Returns (mailer_bytes, content_bytes) where either can be None
-pub fn get_images(images: &[ExtractedImage]) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
+/// Extract mailer and content images from raw email bytes
+/// Returns (mailer_bytes, content_bytes) for the first mail piece
+/// If email contains multiple pieces, only the first piece's images are returned
+/// Either or both images can be None if not present in the email
+pub fn get_images(raw_email: &[u8]) -> Result<(Option<Vec<u8>>, Option<Vec<u8>>)> {
+    let parsed = parse_email(raw_email)?;
+
+    if parsed.images.is_empty() {
+        return Ok((None, None));
+    }
+
+    let groups = group_images_by_piece(parsed.images);
+    let first_piece = match groups.into_iter().next() {
+        Some((_, images)) => images,
+        None => return Ok((None, None)),
+    };
+
     let mut mailer: Option<Vec<u8>> = None;
     let mut content: Option<Vec<u8>> = None;
 
-    for image in images {
+    for image in &first_piece {
         if is_content_image(&image.filename) {
             if content.is_none() {
                 content = Some(image.data.clone());
@@ -184,5 +198,5 @@ pub fn get_images(images: &[ExtractedImage]) -> (Option<Vec<u8>>, Option<Vec<u8>
         }
     }
 
-    (mailer, content)
+    Ok((mailer, content))
 }
