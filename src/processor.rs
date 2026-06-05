@@ -72,6 +72,28 @@ pub async fn process_raw_email(
     let mut total_usage = TokenUsage::default();
 
     for (piece_id, images) in &groups {
+        let piece_hash = xxh3_64(piece_id.as_bytes());
+        let piece_hash_str = format!("{:016x}", piece_hash);
+        let piece_dir = storage.ensure_piece_dir(&dir, &piece_hash_str).await?;
+
+        let mut mailer_images: Vec<&ExtractedImage> = Vec::new();
+        let mut content_images: Vec<&ExtractedImage> = Vec::new();
+
+        for image in images {
+            if is_content_image(&image.filename) {
+                content_images.push(image);
+            } else {
+                mailer_images.push(image);
+            }
+        }
+
+        if mailer_images.len() > 1 {
+            tracing::warn!(piece = %piece_id, count = mailer_images.len(), "Multiple mailer images found for piece, using first");
+        }
+        if content_images.len() > 1 {
+            tracing::warn!(piece = %piece_id, count = content_images.len(), "Multiple content images found for piece, using first");
+        }
+
         let mut mailer: Option<MailImage> = None;
         let mut content: Option<MailImage> = None;
         let mut best_from: Option<Address> = None;
@@ -80,13 +102,15 @@ pub async fn process_raw_email(
         let mut best_confidence: f32 = 0.0;
         let mut postmark_date: Option<chrono::NaiveDate> = None;
 
-
         for image in images {
             let image_hash = ContentHash {
                 value: format!("{:016x}", xxh3_64(&image.data)),
                 hash_type: "xxh3".to_string(),
             };
-            storage.store_image(&dir, &image.data, &image.filename).await?;
+
+            let is_content = is_content_image(&image.filename);
+            let simple_filename = if is_content { "content.jpg" } else { "mailer.jpg" };
+            let image_path = storage.store_image(&piece_dir, &piece_hash_str, &image.data, simple_filename).await?;
 
             let analysis_result = result_iter.next().unwrap();
             let (full_text, error) = match analysis_result {
@@ -116,20 +140,24 @@ pub async fn process_raw_email(
 
             let mail_image = MailImage {
                 hash: image_hash,
+                image: image_path,
                 full_text,
                 error,
             };
 
-            if is_content_image(&image.filename) {
-                content = Some(mail_image);
+            if is_content {
+                if content.is_none() {
+                    content = Some(mail_image);
+                }
             } else {
-                mailer = Some(mail_image);
+                if mailer.is_none() {
+                    mailer = Some(mail_image);
+                }
             }
         }
 
-        let piece_hash = xxh3_64(piece_id.as_bytes());
         mail_pieces.push(MailPiece {
-            id: format!("{:016x}", piece_hash),
+            id: piece_hash_str,
             from_address: best_from,
             to_address: best_to,
             mail_type: best_mail_type,

@@ -73,19 +73,37 @@ impl Storage {
         }
     }
 
+    pub async fn ensure_piece_dir(&self, email_dir: &StorageDir, piece_id: &str) -> Result<StorageDir> {
+        match (self, email_dir) {
+            (Storage::Local { .. }, StorageDir::Local(email_path)) => {
+                let piece_dir = email_path.join(piece_id);
+                fs::create_dir_all(&piece_dir)
+                    .await
+                    .context("Failed to create piece storage directory")?;
+                Ok(StorageDir::Local(piece_dir))
+            }
+            (Storage::S3 { .. }, StorageDir::S3Key(email_prefix)) => {
+                let piece_prefix = format!("{}/{}", email_prefix, piece_id);
+                Ok(StorageDir::S3Key(piece_prefix))
+            }
+            _ => anyhow::bail!("Mismatched storage and directory types"),
+        }
+    }
+
     pub async fn store_image(
         &self,
-        dir: &StorageDir,
+        piece_dir: &StorageDir,
+        piece_id: &str,
         data: &[u8],
         filename: &str,
     ) -> Result<String> {
-        match (self, dir) {
+        match (self, piece_dir) {
             (Storage::Local { .. }, StorageDir::Local(path)) => {
                 let file_path = path.join(filename);
                 fs::write(&file_path, data)
                     .await
                     .context("Failed to write image file")?;
-                Ok(filename.to_string())
+                Ok(format!("{}/{}", piece_id, filename))
             }
             (Storage::S3 { client, bucket, .. }, StorageDir::S3Key(prefix)) => {
                 let key = format!("{prefix}/{filename}");
@@ -98,7 +116,7 @@ impl Storage {
                     .send()
                     .await
                     .with_context(|| format!("Failed to upload s3://{bucket}/{key}"))?;
-                Ok(filename.to_string())
+                Ok(format!("{}/{}", piece_id, filename))
             }
             _ => anyhow::bail!("Mismatched storage and directory types"),
         }

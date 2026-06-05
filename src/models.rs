@@ -29,6 +29,7 @@ pub struct ContentHash {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MailImage {
     pub hash: ContentHash,
+    pub image: String,
     pub full_text: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,

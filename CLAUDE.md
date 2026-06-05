@@ -18,7 +18,24 @@ gh auth switch --user chb0github
 ```
 Switch back when done.
 
+## Rust/Cargo Builds
+
+The user has a custom `cc` command wrapper in `~/.local/bin` that conflicts with the system compiler. All cargo commands must use system PATH:
+```bash
+PATH="/usr/bin:/bin:$PATH" cargo build --release
+PATH="/usr/bin:/bin:$PATH" cargo test
+```
+
+## SMS Notifications
+
+Send SMS updates via CallCentric (from 425-394-2504 to user's Google Fi 703-975-4376):
+```bash
+~/dev/mine/cc_sms/cc sms send -m "message text" 7039754376
+```
+
 ## Operational Workflows
+
+**Important:** Never commit the `results/` or `emails_retry/` directories to git. These contain generated output and local email files that should not be in version control.
 
 ### Full Reconciliation (Rare)
 

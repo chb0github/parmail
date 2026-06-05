@@ -15,3 +15,4 @@ reports/
 *.tfvars
 .terraform.lock.hcl
 results/
+.claude/
