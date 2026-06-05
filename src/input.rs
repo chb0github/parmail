@@ -129,9 +129,7 @@ async fn list_s3_objects(client: &S3Client, bucket: &str, prefix: &str) -> Resul
         if let Some(ref contents) = resp.contents {
             for obj in contents {
                 if let Some(key) = obj.key() {
-                    if key.ends_with(".eml") {
-                        keys.push(key.to_string());
-                    }
+                    keys.push(key.to_string());
                 }
             }
         }
