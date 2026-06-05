@@ -2,6 +2,8 @@ use anyhow::{Context, Result};
 use aws_sdk_s3::Client as S3Client;
 use std::path::{Path, PathBuf};
 
+use crate::s3::ParmailS3Client;
+
 #[derive(Debug, Clone)]
 pub enum EmailSource {
     Local(PathBuf),
@@ -41,7 +43,8 @@ pub async fn resolve_sources(paths: &[String], s3_client: Option<&S3Client>) -> 
         match parse_uri(p) {
             Uri::S3 { bucket, prefix } => {
                 let client = s3_client.context("S3 path provided but AWS is not configured")?;
-                let keys = list_s3_objects(client, &bucket, &prefix).await?;
+                let parmail_client = ParmailS3Client::new(client.clone(), bucket.clone());
+                let keys = parmail_client.list_objects_with_prefix(&prefix).await?;
                 for key in keys {
                     sources.push(EmailSource::S3 { bucket: bucket.clone(), key });
                 }
@@ -108,37 +111,6 @@ fn parse_uri(input: &str) -> Uri {
     } else {
         Uri::Local(PathBuf::from(input))
     }
-}
-
-async fn list_s3_objects(client: &S3Client, bucket: &str, prefix: &str) -> Result<Vec<String>> {
-    let mut keys = Vec::new();
-    let mut continuation_token: Option<String> = None;
-
-    loop {
-        let mut req = client.list_objects_v2().bucket(bucket);
-        if !prefix.is_empty() {
-            req = req.prefix(prefix);
-        }
-        if let Some(token) = &continuation_token {
-            req = req.continuation_token(token);
-        }
-
-        let resp = req.send().await
-            .with_context(|| format!("Failed to list s3://{bucket}/{prefix}"))?;
-
-        if let Some(ref contents) = resp.contents {
-            keys.extend(
-                contents.iter().filter_map(|obj| obj.key()).map(|key| key.to_string())
-            );
-        }
-
-        match resp.next_continuation_token() {
-            Some(token) => continuation_token = Some(token.to_string()),
-            None => break,
-        }
-    }
-
-    Ok(keys)
 }
 
 fn walk_dir(dir: &Path, sources: &mut Vec<EmailSource>) -> Result<()> {

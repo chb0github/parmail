@@ -19,6 +19,11 @@ impl ParmailS3Client {
         self.list_objects("emails/").await
     }
 
+    /// List objects with a given prefix (public for general use)
+    pub async fn list_objects_with_prefix(&self, prefix: &str) -> Result<Vec<String>> {
+        self.list_objects(prefix).await
+    }
+
     /// Store processing results to S3
     /// Returns the S3 key root path (e.g., "output/68612578126e984c/")
     pub async fn add_result(
