@@ -4,6 +4,30 @@
 
 Inbound emails arrive via SES → SES drops raw .eml into S3 (`emails/` prefix) → S3 notification triggers the Lambda → Lambda processes them and writes output to S3 (`output/` prefix).
 
+### Unified Processing Pipeline
+
+Lambda and CLI use the exact same code path (as of June 2026 refactoring):
+
+```
+EmailSource (Local | S3)
+    ↓
+fetch_email()           // unified input abstraction
+    ↓
+process_raw_email()     // core pipeline (model inference + analysis)
+    ↓
+Storage (Local | S3)    // unified output abstraction
+```
+
+**Key modules:**
+- `input.rs`: `EmailSource` enum + `fetch_email()` - handles both local files and S3 objects
+- `processor.rs`: `process_raw_email()` - core pipeline used by both Lambda and CLI
+- `storage.rs`: `Storage` trait - writes manifests/images to local or S3
+- `lambda.rs`: Thin wrapper that converts S3 events to `EmailSource::S3` and calls the core pipeline
+- `main.rs`: CLI that converts paths to `EmailSource` and calls the core pipeline
+
+**Helpers:**
+- `email::get_images(&[ExtractedImage])` - extracts (mailer_bytes, content_bytes) from a mail piece
+
 ## AWS
 
 All AWS CLI commands must use `--profile thetaone`.
