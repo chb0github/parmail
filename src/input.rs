@@ -127,11 +127,12 @@ async fn list_s3_objects(client: &S3Client, bucket: &str, prefix: &str) -> Resul
             .with_context(|| format!("Failed to list s3://{bucket}/{prefix}"))?;
 
         if let Some(ref contents) = resp.contents {
-            for obj in contents {
-                if let Some(key) = obj.key() {
-                    keys.push(key.to_string());
-                }
-            }
+            keys.extend(
+                contents
+                    .iter()
+                    .filter_map(|obj| obj.key())
+                    .map(|key| key.to_string())
+            );
         }
 
         match resp.next_continuation_token() {
