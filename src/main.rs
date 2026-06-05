@@ -5,6 +5,7 @@ mod lambda;
 mod models;
 pub mod output;
 mod processor;
+mod s3;
 mod storage;
 mod validate;
 

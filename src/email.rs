@@ -167,32 +167,39 @@ pub fn group_images_by_piece(images: Vec<ExtractedImage>) -> IndexMap<String, Ve
 }
 
 /// Extract mailer and content images from raw email bytes
-/// Returns (mailer_bytes, content_bytes) for the first mail piece
+/// Returns borrowed slices (mailer_bytes, content_bytes) for the first mail piece
 /// If email contains multiple pieces, only the first piece's images are returned
 /// Either or both images can be None if not present in the email
-pub fn get_images(raw_email: &[u8]) -> Result<(Option<Vec<u8>>, Option<Vec<u8>>)> {
-    let parsed = parse_email(raw_email)?;
-
+pub fn get_images(parsed: &ParsedEmail) -> (Option<&[u8]>, Option<&[u8]>) {
     if parsed.images.is_empty() {
-        return Ok((None, None));
+        return (None, None);
     }
 
-    let groups = group_images_by_piece(parsed.images);
+    let groups = group_images_by_piece_ref(&parsed.images);
     let first_piece = match groups.into_iter().next() {
         Some((_, images)) => images,
-        None => return Ok((None, None)),
+        None => return (None, None),
     };
 
-    let mut mailer: Option<Vec<u8>> = None;
-    let mut content: Option<Vec<u8>> = None;
+    let mut mailer: Option<&[u8]> = None;
+    let mut content: Option<&[u8]> = None;
 
-    for image in &first_piece {
-        match (is_content_image(&image.filename), &content, &mailer) {
-            (true, None, _) => content = Some(image.data.clone()),
-            (false, _, None) => mailer = Some(image.data.clone()),
+    for image in first_piece {
+        match (is_content_image(&image.filename), content, mailer) {
+            (true, None, _) => content = Some(&image.data),
+            (false, _, None) => mailer = Some(&image.data),
             _ => {} // Skip if we already have this image type
         }
     }
 
-    Ok((mailer, content))
+    (mailer, content)
+}
+
+fn group_images_by_piece_ref(images: &[ExtractedImage]) -> indexmap::IndexMap<String, Vec<&ExtractedImage>> {
+    let mut groups: indexmap::IndexMap<String, Vec<&ExtractedImage>> = indexmap::IndexMap::new();
+    for image in images {
+        let piece_id = extract_piece_id(&image.filename);
+        groups.entry(piece_id).or_default().push(image);
+    }
+    groups
 }
