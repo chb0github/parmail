@@ -1,6 +1,5 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use aws_sdk_bedrockruntime::Client as BedrockClient;
-use aws_sdk_s3::Client as S3Client;
 use futures::future::join_all;
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -9,35 +8,9 @@ use crate::email::{group_images_by_piece, is_content_image, parse_email, Extract
 use crate::models::{Address, ContentHash, EmailManifest, MailImage, MailPiece, MailType, TokenUsage};
 use crate::storage::Storage;
 
-pub async fn process_s3_email(
-    s3_client: &S3Client,
-    bedrock_client: &BedrockClient,
-    model: &ModelConfig,
-    storage: &Storage,
-    bucket: &str,
-    key: &str,
-) -> Result<EmailManifest> {
-    tracing::info!(bucket, key, "Fetching email from S3");
-
-    let resp = s3_client
-        .get_object()
-        .bucket(bucket)
-        .key(key)
-        .send()
-        .await
-        .context("Failed to fetch email from S3")?;
-
-    let raw_email = resp
-        .body
-        .collect()
-        .await
-        .context("Failed to read S3 object body")?
-        .into_bytes()
-        .to_vec();
-
-    process_raw_email(bedrock_client, model, storage, key, &raw_email).await
-}
-
+/// Core email processing pipeline - used by both CLI and Lambda
+/// Input: raw email bytes
+/// Output: EmailManifest stored via Storage abstraction
 pub async fn process_raw_email(
     bedrock_client: &BedrockClient,
     model: &ModelConfig,

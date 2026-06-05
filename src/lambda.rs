@@ -4,8 +4,9 @@ use aws_sdk_s3::Client as S3Client;
 use lambda_runtime::{service_fn, LambdaEvent};
 
 use crate::analysis::ModelConfig;
+use crate::input::{fetch_email, EmailSource};
 use crate::models::S3Event;
-use crate::processor::process_s3_email;
+use crate::processor::process_raw_email;
 use crate::storage::Storage;
 
 type LambdaError = Box<dyn std::error::Error + Send + Sync>;
@@ -51,10 +52,19 @@ async fn handle_s3_event(
     let (s3_event, _context) = event.into_parts();
 
     for record in &s3_event.records {
-        let bucket = &record.s3.bucket.name;
-        let key = &record.s3.object.key;
+        let bucket = record.s3.bucket.name.clone();
+        let key = record.s3.object.key.clone();
+        let source = EmailSource::S3 { bucket: bucket.clone(), key: key.clone() };
 
-        match process_s3_email(s3_client, bedrock_client, model, storage, bucket, key).await {
+        let raw_email = match fetch_email(&source, Some(s3_client)).await {
+            Ok(data) => data,
+            Err(e) => {
+                tracing::error!(error = %e, bucket, key, "Failed to fetch email");
+                return Err(e.to_string().into());
+            }
+        };
+
+        match process_raw_email(bedrock_client, model, storage, &key, &raw_email).await {
             Ok(manifest) => {
                 tracing::info!(
                     count = manifest.mail_pieces.len(),
