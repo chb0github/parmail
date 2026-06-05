@@ -187,14 +187,10 @@ pub fn get_images(raw_email: &[u8]) -> Result<(Option<Vec<u8>>, Option<Vec<u8>>)
     let mut content: Option<Vec<u8>> = None;
 
     for image in &first_piece {
-        if is_content_image(&image.filename) {
-            if content.is_none() {
-                content = Some(image.data.clone());
-            }
-        } else {
-            if mailer.is_none() {
-                mailer = Some(image.data.clone());
-            }
+        match (is_content_image(&image.filename), &content, &mailer) {
+            (true, None, _) => content = Some(image.data.clone()),
+            (false, _, None) => mailer = Some(image.data.clone()),
+            _ => {} // Skip if we already have this image type
         }
     }
 
