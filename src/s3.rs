@@ -14,6 +14,12 @@ impl ParmailS3Client {
         Self { client, bucket }
     }
 
+    pub async fn from_bucket(bucket: String) -> Self {
+        let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+        let client = S3Client::new(&config);
+        Self { client, bucket }
+    }
+
     /// List all email keys from the emails/ prefix
     pub async fn list_emails(&self) -> Result<Vec<String>> {
         self.list_objects("emails/").await

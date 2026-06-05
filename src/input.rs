@@ -70,9 +70,7 @@ pub async fn get_email(source: &str) -> Result<Vec<u8>> {
                 .with_context(|| format!("Failed to read {}", path.display()))
         }
         Uri::S3 { bucket, prefix } => {
-            let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
-            let client = S3Client::new(&config);
-            let parmail_client = ParmailS3Client::new(client, bucket);
+            let parmail_client = ParmailS3Client::from_bucket(bucket).await;
             parmail_client.get_data(&prefix).await
         }
     }
