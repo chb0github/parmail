@@ -7,11 +7,11 @@ def execute:
     [.[] |
       .received_date as $date |
       .mail_pieces[] |
-      select(.from_address.status == "resolved") |
+      select(.from_address.resolved) |
       {
-        name: (.from_address.address.name // "unknown"),
-        city: (.from_address.address.city // ""),
-        state: (.from_address.address.state // ""),
+        name: (.from_address.name // "unknown"),
+        city: (.from_address.city // ""),
+        state: (.from_address.state // ""),
         mail_type: .mail_type,
         date: $date
       }

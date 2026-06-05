@@ -6,7 +6,7 @@ def execute:
   map(
     .[0].model_id as $model |
     (map(.usage) | {in: (map(.input_tokens) | add // 0), out: (map(.output_tokens) | add // 0)}) as $tok |
-    (map(.mail_pieces) | flatten | map(select(.from_address.status == "resolved")) | length) as $from_resolved |
+    (map(.mail_pieces) | flatten | map(select(.from_address.resolved)) | length) as $from_resolved |
     ($prices[$model] // [1, 5]) as $p |
     ($tok.in / 1000000 * $p[0] + $tok.out / 1000000 * $p[1]) as $cost |
     {

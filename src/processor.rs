@@ -6,7 +6,7 @@ use xxhash_rust::xxh3::xxh3_64;
 
 use crate::analysis::{analyze_image, ModelConfig};
 use crate::email::{group_images_by_piece, is_content_image, parse_email, ExtractedImage};
-use crate::models::{Address, AddressField, AddressStatus, ContentHash, EmailManifest, MailImage, MailPiece, MailType, TokenUsage};
+use crate::models::{Address, ContentHash, EmailManifest, MailImage, MailPiece, MailType, TokenUsage};
 use crate::storage::Storage;
 
 pub async fn process_s3_email(
@@ -61,22 +61,21 @@ pub async fn process_raw_email(
     let groups = group_images_by_piece(parsed.images);
 
     let all_images: Vec<&ExtractedImage> = groups.values().flatten().collect();
+    let email_id = &parsed.info.id();
     let analysis_futures: Vec<_> = all_images.iter()
-        .map(|image| analyze_image(bedrock_client, model, &image.data, &image.content_type))
+        .map(|image| analyze_image(bedrock_client, model, &image.data, &image.content_type, email_id))
         .collect();
     let analysis_results = join_all(analysis_futures).await;
 
     let mut result_iter = analysis_results.into_iter();
     let mut mail_pieces = Vec::new();
-    let mut to_address: Option<Address> = None;
-    let mut to_status = AddressStatus::Redacted;
     let mut total_usage = TokenUsage::default();
 
     for (piece_id, images) in &groups {
         let mut mailer: Option<MailImage> = None;
         let mut content: Option<MailImage> = None;
         let mut best_from: Option<Address> = None;
-        let mut from_status = AddressStatus::Unreadable;
+        let mut best_to: Option<Address> = None;
         let mut best_mail_type: MailType = "unknown".to_string();
         let mut best_confidence: f32 = 0.0;
         let mut postmark_date: Option<chrono::NaiveDate> = None;
@@ -94,21 +93,11 @@ pub async fn process_raw_email(
                 Ok((analysis, usage)) => {
                     total_usage.input_tokens += usage.input_tokens;
                     total_usage.output_tokens += usage.output_tokens;
-                    if to_address.is_none() {
-                        if let Some(addr) = analysis.to_address {
-                            if addr.street.is_some() {
-                                to_address = Some(addr);
-                                to_status = AddressStatus::Resolved;
-                            }
-                        }
+                    if best_to.is_none() {
+                        best_to = analysis.to_address;
                     }
                     if best_from.is_none() {
-                        if let Some(addr) = analysis.from_address {
-                            if addr.street.is_some() {
-                                best_from = Some(addr);
-                                from_status = AddressStatus::Resolved;
-                            }
-                        }
+                        best_from = analysis.from_address;
                     }
                     if analysis.confidence.unwrap_or(0.0) > best_confidence {
                         best_confidence = analysis.confidence.unwrap_or(0.0);
@@ -121,16 +110,11 @@ pub async fn process_raw_email(
                 }
                 Err(e) => {
                     tracing::warn!(image = %image.filename, error = %e, "Analysis failed");
-                    from_status = AddressStatus::NotAnalyzed;
-                    if to_address.is_none() {
-                        to_status = AddressStatus::NotAnalyzed;
-                    }
                     (String::new(), Some(format!("{e}")))
                 }
             };
 
             let mail_image = MailImage {
-                filename: image.filename.clone(),
                 hash: image_hash,
                 full_text,
                 error,
@@ -146,7 +130,8 @@ pub async fn process_raw_email(
         let piece_hash = xxh3_64(piece_id.as_bytes());
         mail_pieces.push(MailPiece {
             id: format!("{:016x}", piece_hash),
-            from_address: AddressField { address: best_from, status: from_status },
+            from_address: best_from,
+            to_address: best_to,
             mail_type: best_mail_type,
             confidence: best_confidence,
             postmark_date,
@@ -168,7 +153,6 @@ pub async fn process_raw_email(
         received_date,
         email_message_id: parsed.info.message_id,
         processed_at: chrono::Utc::now().to_rfc3339(),
-        to_address: AddressField { address: to_address, status: to_status },
         mail_pieces,
         usage: total_usage,
     };

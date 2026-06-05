@@ -2,7 +2,7 @@ target/
 data/
 .env
 *.eml
-samples/
+emails/
 .idea/
 .envrc
 terraform/

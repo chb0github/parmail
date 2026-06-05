@@ -4,10 +4,8 @@ def execute:
   group_by(.model_id) |
   map(
     .[0].model_id as $model |
-    [.[] | .mail_pieces[] |
-      select(.from_address.status == "resolved") |
-      .from_address.address.name // "unknown"
-    ] |
+    map(.mail_pieces) | flatten |
+    map(select(.from_address.resolved) | .from_address.name // "unknown") |
     group_by(.) |
     map({
       model: $model,

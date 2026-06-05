@@ -1,7 +1,7 @@
 /target
-/samples
+emails/
 /data
-/reports
+reports/
 *.csv
 *.log
 .idea/
@@ -14,3 +14,4 @@
 *.tfstate.backup
 *.tfvars
 .terraform.lock.hcl
+results/

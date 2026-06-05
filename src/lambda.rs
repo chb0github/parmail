@@ -3,6 +3,7 @@ use aws_sdk_bedrockruntime::Client as BedrockClient;
 use aws_sdk_s3::Client as S3Client;
 use lambda_runtime::{service_fn, LambdaEvent};
 
+use crate::analysis::ModelConfig;
 use crate::models::S3Event;
 use crate::processor::process_s3_email;
 use crate::storage::Storage;
@@ -17,12 +18,21 @@ pub async fn run_lambda() -> Result<()> {
     let storage_dir =
         std::env::var("STORAGE_DIR").unwrap_or_else(|_| "/tmp/parmail".to_string());
 
+    let model_config = match std::env::var("BEDROCK_MODEL_ID") {
+        Ok(id) => {
+            let models_file = std::env::var("MODELS_FILE").unwrap_or_else(|_| "models.json".to_string());
+            ModelConfig::load(&models_file, &id, false, &storage_dir).unwrap_or_else(|_| ModelConfig::default_config(&storage_dir))
+        }
+        Err(_) => ModelConfig::default_config(&storage_dir),
+    };
+
     let handler = service_fn(move |event: LambdaEvent<S3Event>| {
         let s3 = s3_client.clone();
         let bedrock = bedrock_client.clone();
+        let model = model_config.clone();
         let store = Storage::from_uri(&storage_dir, Some(s3.clone()))
             .expect("Invalid STORAGE_DIR");
-        async move { handle_s3_event(&s3, &bedrock, &store, event).await }
+        async move { handle_s3_event(&s3, &bedrock, &model, &store, event).await }
     });
 
     lambda_runtime::run(handler)
@@ -34,6 +44,7 @@ pub async fn run_lambda() -> Result<()> {
 async fn handle_s3_event(
     s3_client: &S3Client,
     bedrock_client: &BedrockClient,
+    model: &ModelConfig,
     storage: &Storage,
     event: LambdaEvent<S3Event>,
 ) -> std::result::Result<serde_json::Value, LambdaError> {
@@ -43,7 +54,7 @@ async fn handle_s3_event(
         let bucket = &record.s3.bucket.name;
         let key = &record.s3.object.key;
 
-        match process_s3_email(s3_client, bedrock_client, storage, bucket, key).await {
+        match process_s3_email(s3_client, bedrock_client, model, storage, bucket, key).await {
             Ok(manifest) => {
                 tracing::info!(
                     count = manifest.mail_pieces.len(),

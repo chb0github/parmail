@@ -124,28 +124,71 @@ Token counts must be captured from the Bedrock Converse API response metadata (T
 
 ## Scripts (bin/)
 
-```bash
-bin/fetch_emails.sh -o emails/        # Bulk-download emails from Gmail via IMAP
-bin/forward_emails.sh -r addr emails/ # Forward .eml files via SMTP
-bin/report.sh -r all                  # Generate all CSV reports
-```
+All scripts support `-h` for detailed usage. Most require `~/.netrc` with Gmail app password credentials (no spaces in the password).
 
-Requires `~/.netrc` with Gmail app password credentials (no spaces in the password). Run any script with `-h` for options.
+### fetch_emails.sh
 
-## Reports
+Bulk-download emails from Gmail via IMAP.
 
 ```
-Usage: bin/report.sh [-i data_dir] [-o output_dir] -r report [-r report]...
+Usage: bin/fetch_emails.sh [OPTIONS]
 
 Options:
-  -i DIR    Data directory containing manifest.json files (default: ./results)
-  -o DIR    Write CSV files to this directory
-  -r NAME   Report to generate (may specify multiple)
+  -o DIR     Output directory (default: samples)
+  -f FROM    Filter by sender (default: USPSInformeddelivery@email.informeddelivery.usps.com)
+  -s SUBJ    Filter by subject (default: Your Daily Digest)
+  -p NUM     Parallel downloads (default: 10)
+  -m URL     IMAP mailbox URL (default: imaps://imap.gmail.com/%5BGmail%5D/All%20Mail)
+  -n         Dry run: print message count and exit
+  -h         Show this help
 
-Reports:
+Examples:
+  bin/fetch_emails.sh -o emails/               # Download all USPS emails
+  bin/fetch_emails.sh -n                       # Count matching emails without downloading
+  bin/fetch_emails.sh -f "sender@example.com"  # Download from specific sender
+```
+
+### forward_emails.sh
+
+Forward .eml files via SMTP (useful for seeding S3 after infrastructure setup).
+
+```
+Usage: bin/forward_emails.sh -r RECIPIENT [OPTIONS] PATH [PATH...]
+
+Forwards .eml files via SMTP. If PATH is a directory, all .eml files in it
+are forwarded. If PATH is a file, it is forwarded directly.
+
+Options:
+  -r ADDR    Recipient email address (required)
+  -d SECS    Delay between sends in seconds (default: 10)
+  -h         Show this help
+
+Examples:
+  bin/forward_emails.sh -r mail@parmail.yourdomain.com emails/
+  bin/forward_emails.sh -r mail@parmail.yourdomain.com -d 5 *.eml
+```
+
+### report.sh
+
+Generate CSV reports from processed manifests.
+
+```
+Usage: bin/report.sh [options]
+
+Options:
+  -i DIR         Data directory containing manifest.json files (default: ./results)
+  -o DIR         Output directory for CSV files (default: ./reports)
+  -r REPORT      Report to generate (can specify multiple times, default: all)
+  -h, --help     Show this help
+  --completion   Show zsh completion setup
+  --list-reports List available reports (one per line)
+
+Available reports:
+  addresses       Address frequency report with person names
   agreement       Cross-model agreement rates on from_name, street, city, mail_type, to_name
   dq              Address resolution rates (resolved/redacted/unreadable/not_analyzed)
   ds              Repeat senders (5+ times) - unsubscribe candidates
+  errors          Per-model error counts grouped by error message
   export          Export all manifests to flat CSV (one row per mail piece)
   model_cost      Token usage, cost, and cost-per-resolved-address by model
   model_stats     Per-model parse and resolution rates
@@ -153,10 +196,82 @@ Reports:
   ts              Top senders by frequency
   vot             Mail pieces received per day
 
-  all             Run all reports
+Examples:
+  bin/report.sh                        # Generate all reports
+  bin/report.sh -r errors              # Generate errors report only
+  bin/report.sh -r errors -r addresses # Generate errors and addresses reports
+  bin/report.sh -o /tmp/reports        # Generate all reports to /tmp/reports
 ```
 
 To add a new report, drop a `.jq` file in `bin/jq/` with `include "shared"`, `def describe:`, and `def execute:`. It auto-discovers.
+
+### run_models.sh
+
+Run multiple models against the same email corpus for comparison.
+
+```
+Usage: bin/run_models.sh [-m model]... [-f models_file] [-i input_dir] [-o output_dir] [--overwrite] [--save-responses]
+
+Options:
+  -m MODEL         Run a specific model (repeatable)
+  -f FILE          Models config file (default: models.default.json)
+  -i DIR           Input directory of .eml files (default: emails)
+  -o DIR           Output base directory (default: results)
+  --overwrite      Delete existing results before rerunning
+  --save-responses Pass --save-responses to parmail for raw response capture
+
+Examples:
+  bin/run_models.sh                        # Run all models in models.default.json
+  bin/run_models.sh -m us.amazon.nova-pro-v1:0
+  bin/run_models.sh --overwrite            # Clear results and rerun all
+```
+
+### sync.sh
+
+Sync local results to/from S3 and fill processing gaps.
+
+```
+Usage: bin/sync.sh [--reconcile] [--delete-remote] [--dry-run] [-m model] [-i results_dir] [-e emails_dir]
+
+Sync local results to S3 and fill processing gaps.
+
+Options:
+  --reconcile      Pull emails from S3, process unprocessed ones, push results back
+  --delete-remote  Delete all existing output/ in S3 before uploading
+  --dry-run        Show what would be done without doing it
+  -m MODEL         Model directory to sync (default: claude-haiku-4-5-20251001-v1)
+  -i DIR           Local results base dir (default: ./results)
+  -e DIR           Local emails dir (default: ./emails)
+  -h               Show this help
+
+Examples:
+  bin/sync.sh                              # Sync default model results to S3
+  bin/sync.sh --reconcile                  # Full reconciliation (download, process, upload)
+  bin/sync.sh --delete-remote --reconcile  # Rebuild S3 output/ from scratch
+  bin/sync.sh --dry-run                    # Preview without making changes
+```
+
+### reprocess_unparseable.sh
+
+Find and reprocess emails that resulted in unparseable model responses.
+
+**Note:** This script has no command-line options. It's hardcoded to reprocess with Claude Haiku 4.5. Edit the script to change the model or storage directory.
+
+```bash
+# Finds all manifests with "No parseable response from model" errors
+# Deletes the manifest and reprocesses the email
+bin/reprocess_unparseable.sh
+```
+
+The script:
+1. Scans all manifests for parsing errors
+2. Locates the original .eml file by Message-ID
+3. Deletes the failed manifest
+4. Reprocesses with the configured model (benefits from escape fix and disabled guardrails)
+
+## Reports
+
+See [report.sh](#reportsh) in the Scripts section for usage details.
 
 ## Output structure
 

@@ -4,7 +4,8 @@ def execute:
   group_by(.model_id) |
   map(
     .[0].model_id as $model |
-    [.[] | .mail_pieces[].mail_type] |
+    map(.mail_pieces) | flatten |
+    map(.mail_type) |
     length as $total |
     group_by(.) |
     map({

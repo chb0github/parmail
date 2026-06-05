@@ -3,20 +3,14 @@
     "format": "json_prompt",
     "prompt": "Analyze this scanned image of a piece of physical mail. Extract the sender address, recipient address, classify the mail type, transcribe all visible text, and extract the postmark date if visible. USPS often redacts the recipient address with a white rectangle — if you see that, set to_address fields to null."
   },
-  "us.meta.llama4-scout-17b-16e-instruct-v1:0": {
-    "format": "json_prompt",
-    "prompt": "Analyze this scanned image of a piece of physical mail. Extract the sender address, recipient address, classify the mail type, transcribe all visible text, and extract the postmark date if visible. USPS often redacts the recipient address with a white rectangle — if you see that, set to_address fields to null."
-  },
-  "us.meta.llama4-maverick-17b-128e-instruct-v1:0": {
-    "format": "json_prompt",
-    "prompt": "Analyze this scanned image of a piece of physical mail. Extract the sender address, recipient address, classify the mail type, transcribe all visible text, and extract the postmark date if visible. USPS often redacts the recipient address with a white rectangle — if you see that, set to_address fields to null."
-  },
   "us.amazon.nova-pro-v1:0": {
     "format": "json_prompt",
     "prompt": "Analyze this scanned image of a piece of physical mail. Extract the sender address, recipient address, classify the mail type, transcribe all visible text, and extract the postmark date if visible. USPS often redacts the recipient address with a white rectangle — if you see that, set to_address fields to null."
   },
-  "us.mistral.pixtral-large-2502-v1:0": {
-    "format": "json_prompt",
-    "prompt": "Analyze this scanned image of a piece of physical mail. Extract the sender address, recipient address, classify the mail type, transcribe all visible text, and extract the postmark date if visible. USPS often redacts the recipient address with a white rectangle — if you see that, set to_address fields to null."
+  "us.anthropic.claude-haiku-4-5-20251001-v1:0": {
+    "format": "tool_use"
+  },
+  "us.anthropic.claude-sonnet-4-6": {
+    "format": "tool_use"
   }
 }

@@ -1,15 +1,12 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum MailType {
-    Advertising,
-    Political,
-    Personal,
-    Financial,
-    Government,
-    Unknown,
+pub type MailType = String;
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TokenUsage {
+    pub input_tokens: u64,
+    pub output_tokens: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,21 +16,7 @@ pub struct Address {
     pub city: Option<String>,
     pub state: Option<String>,
     pub zip: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum AddressStatus {
-    Resolved,
-    Redacted,
-    Unreadable,
-    NotAnalyzed,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AddressField {
-    pub address: Option<Address>,
-    pub status: AddressStatus,
+    pub resolved: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,7 +28,6 @@ pub struct ContentHash {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MailImage {
-    pub filename: String,
     pub hash: ContentHash,
     pub full_text: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -55,7 +37,10 @@ pub struct MailImage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MailPiece {
     pub id: String,
-    pub from_address: AddressField,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from_address: Option<Address>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to_address: Option<Address>,
     pub mail_type: MailType,
     pub confidence: f32,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -67,6 +52,7 @@ pub struct MailPiece {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmailManifest {
     pub id: String,
+    pub model_id: String,
     pub source_file: String,
     pub email_subject: String,
     pub email_from: String,
@@ -74,8 +60,8 @@ pub struct EmailManifest {
     pub received_date: NaiveDate,
     pub email_message_id: String,
     pub processed_at: String,
-    pub to_address: AddressField,
     pub mail_pieces: Vec<MailPiece>,
+    pub usage: TokenUsage,
 }
 
 #[derive(Debug, Clone, Deserialize)]

@@ -131,8 +131,15 @@ fn address_schema(description: &str) -> Document {
                     ("city".into(), Document::Object([("type".into(), Document::String("string".into()))].into_iter().collect())),
                     ("state".into(), Document::Object([("type".into(), Document::String("string".into()))].into_iter().collect())),
                     ("zip".into(), Document::Object([("type".into(), Document::String("string".into()))].into_iter().collect())),
+                    ("resolved".into(), Document::Object([
+                        ("type".into(), Document::String("boolean".into())),
+                        ("description".into(), Document::String("True if address was successfully extracted and parsed".into()))
+                    ].into_iter().collect())),
                 ].into_iter().collect()
             )),
+            ("required".into(), Document::Array(vec![
+                Document::String("resolved".into()),
+            ])),
         ].into_iter().collect()
     )
 }
@@ -183,9 +190,11 @@ pub async fn analyze_image(
     model: &ModelConfig,
     image_data: &[u8],
     content_type: &str,
+    email_id: &str,
 ) -> Result<(AnalysisResponse, TokenUsage)> {
     assert!(!image_data.is_empty(), "image_data must not be empty");
     assert!(!content_type.is_empty(), "content_type must not be empty");
+    assert!(!email_id.is_empty(), "email_id must not be empty");
 
     let format = match content_type {
         "image/jpeg" | "image/jpg" => ImageFormat::Jpeg,
@@ -226,7 +235,10 @@ pub async fn analyze_image(
     let use_tool = entry_format(&model.entry) == "tool_use";
 
     let response = (|| async {
-        let mut req = client.converse().model_id(&model.model_id).messages(message.clone());
+        let mut req = client.converse()
+            .model_id(&model.model_id)
+            .messages(message.clone())
+            .set_guardrail_config(None);
         match use_tool {
             true => {
                 let tool_config = ToolConfiguration::builder()
@@ -285,12 +297,18 @@ pub async fn analyze_image(
                 _ => None,
             }).collect::<Vec<_>>().join("\n");
 
-            if !raw_text.is_empty() {
-                save_unparseable_response(&model.storage_dir, &model.model_id, &raw_text);
-            }
+            // Try fixing common escape issues
+            let fixed_text = raw_text.replace(r"\'", "'");
+            if let Some(json) = extract_json(&fixed_text) {
+                json
+            } else {
+                if !raw_text.is_empty() {
+                    save_unparseable_response(&model.storage_dir, &model.model_id, email_id, &raw_text);
+                }
 
-            let snippet: String = raw_text.chars().take(200).collect();
-            anyhow::bail!("No parseable response from model: {snippet}");
+                let snippet: String = raw_text.chars().take(200).collect();
+                anyhow::bail!("No parseable response from model: {snippet}");
+            }
         }
     };
 
@@ -330,16 +348,13 @@ fn save_raw_response(storage_dir: &str, model_id: &str, json: &serde_json::Value
     }
 }
 
-fn save_unparseable_response(storage_dir: &str, model_id: &str, text: &str) {
+fn save_unparseable_response(storage_dir: &str, model_id: &str, email_id: &str, text: &str) {
     use std::io::Write;
-    use std::sync::atomic::{AtomicU64, Ordering};
 
-    static COUNTER: AtomicU64 = AtomicU64::new(0);
-
-    let dir = Path::new(storage_dir).join("_unparseable");
+    let base = Path::new(storage_dir).parent().unwrap_or(Path::new("."));
+    let dir = base.join("_unparseable").join(model_id);
     let _ = std::fs::create_dir_all(&dir);
-    let seq = COUNTER.fetch_add(1, Ordering::Relaxed);
-    let filename = format!("{model_id}_{seq:06}.txt");
+    let filename = format!("{email_id}.json");
     let path = dir.join(&filename);
     match std::fs::File::create(&path) {
         Ok(mut f) => { let _ = f.write_all(text.as_bytes()); }

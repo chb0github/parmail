@@ -1,18 +1,19 @@
 include "shared";
-def describe: "Address resolution rates (resolved/redacted/unreadable/not_analyzed)";
+def describe: "Address resolution rates (resolved/null)";
 def execute:
   group_by(.model_id) |
   map(
     .[0].model_id as $model |
-    (
-      [.[] | {field: "to", status: .to_address.status}] +
-      [.[] | .mail_pieces[] | {field: "from", status: .from_address.status}]
+    map(.mail_pieces) | flatten |
+    map(
+      {field: "from", resolved: .from_address.resolved},
+      {field: "to", resolved: .to_address.resolved}
     ) |
-    group_by([.field, .status]) |
+    group_by([.field, .resolved]) |
     map({
       model: $model,
       field: .[0].field,
-      status: .[0].status,
+      resolved: .[0].resolved,
       count: length
     })
   ) | flatten | sort_by([.model, .field, -.count]);

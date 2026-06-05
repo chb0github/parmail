@@ -43,7 +43,7 @@ enum Commands {
         #[arg(short, long)]
         storage_dir: Option<String>,
         /// Concurrent email processing limit
-        #[arg(short, long, default_value = "1")]
+        #[arg(short, long, default_value = "2")]
         concurrency: usize,
         /// Bedrock model ID to use for analysis
         #[arg(short, long)]
