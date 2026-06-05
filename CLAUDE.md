@@ -107,11 +107,41 @@ Run all reports with `./bin/report.sh`. Available reports:
 - Reports updated to use flattened structure: `.from_address.name` instead of `.from_address.address.name`
 - Status now tracked via `resolved: bool` instead of enum (`resolved`, `redacted`, `unreadable`, `not_analyzed`)
 
+### Output Directory Structure (v2 - June 2026)
+
+**Breaking change:** Output structure changed from `results/{model}/{hash}/` to `{email_id}/{piece_id}/` format.
+
+**New structure:**
+```
+{email_id}/                          # xxh3_64 hash of email Message-ID
+  manifest.json                      # contains all pieces for this email
+  {piece_id_1}/                      # xxh3_64 hash of piece identifier
+    mailer.jpg                       # exterior front
+    content.jpg                      # exterior back (if exists)
+  {piece_id_2}/
+    mailer.jpg
+    content.jpg
+```
+
+**Manifest structure:**
+- Each `MailImage` has an `image` field with relative path from email directory
+- Example: `"image": "046a09c35047f728/mailer.jpg"`
+- Makes it trivial to display: `{email_id}/{piece_id}/mailer.jpg`
+
+**Migration:**
+- Old `results/` directories (organized by model) are incompatible with new format
+- Production will only use one model, so structuring by model doesn't make sense
+- New format prioritizes easy lookup by email ID
+
+**Test results:**
+- `results_new/` contains 10 sample emails processed with new structure (1.4MB)
+- Validated: image paths, manifest structure, piece directories
+
 ### Email Hash Computation
 
-Parmail uses `xxh3_64` (not MD5) to hash the email Message-ID for directory names:
-- Directory path: `results/{model}/{hash}/manifest.json`
-- Hash: `format!("{:016x}", xxh3_64(message_id.as_bytes()))`
+Parmail uses `xxh3_64` (not MD5) to hash the email Message-ID and piece IDs for directory names:
+- Email directory: `format!("{:016x}", xxh3_64(message_id.as_bytes()))`
+- Piece directory: `format!("{:016x}", xxh3_64(piece_id.as_bytes()))`
 - Example: Message-ID `335743615.263857.1634912068303.JavaMail.prmin@eagnmncom1b38.usps.gov` → hash `68612578126e984c`
 
 ### Resume Logic
