@@ -44,7 +44,6 @@ pub struct MailPiece {
     pub to_address: Option<Address>,
     pub mail_type: MailType,
     pub confidence: f32,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub postmark_date: Option<NaiveDate>,
     pub mailer: Option<MailImage>,
     pub content: Option<MailImage>,
