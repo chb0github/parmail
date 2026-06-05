@@ -10,24 +10,42 @@ pub struct ParmailS3Client {
 }
 
 impl ParmailS3Client {
-    pub fn new(client: S3Client, bucket: String) -> Self {
-        Self { client, bucket }
-    }
-
     pub async fn from_bucket(bucket: String) -> Self {
         let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
         let client = S3Client::new(&config);
         Self { client, bucket }
     }
 
-    /// List all email keys from the emails/ prefix
-    pub async fn list_emails(&self) -> Result<Vec<String>> {
-        self.list_objects("emails/").await
-    }
+    /// List objects with a given prefix
+    pub async fn list_objects(&self, prefix: &str) -> Result<Vec<String>> {
+        let mut keys = Vec::new();
+        let mut continuation_token: Option<String> = None;
 
-    /// List objects with a given prefix (public for general use)
-    pub async fn list_objects_with_prefix(&self, prefix: &str) -> Result<Vec<String>> {
-        self.list_objects(prefix).await
+        loop {
+            let mut req = self.client.list_objects_v2().bucket(&self.bucket);
+            if !prefix.is_empty() {
+                req = req.prefix(prefix);
+            }
+            if let Some(ref token) = continuation_token {
+                req = req.continuation_token(token);
+            }
+
+            let resp = req.send().await
+                .with_context(|| format!("Failed to list s3://{}/{}", self.bucket, prefix))?;
+
+            if let Some(ref contents) = resp.contents {
+                keys.extend(
+                    contents.iter().filter_map(|obj| obj.key()).map(|key| key.to_string())
+                );
+            }
+
+            match resp.next_continuation_token().map(|t| t.to_string()) {
+                Some(next) => continuation_token = Some(next),
+                None => break,
+            }
+        }
+
+        Ok(keys)
     }
 
     /// Get object data from S3 by key
@@ -83,37 +101,6 @@ impl ParmailS3Client {
         }
 
         Ok(root)
-    }
-
-    async fn list_objects(&self, prefix: &str) -> Result<Vec<String>> {
-        let mut keys = Vec::new();
-        let mut continuation_token: Option<String> = None;
-
-        loop {
-            let mut req = self.client.list_objects_v2().bucket(&self.bucket);
-            if !prefix.is_empty() {
-                req = req.prefix(prefix);
-            }
-            if let Some(ref token) = continuation_token {
-                req = req.continuation_token(token);
-            }
-
-            let resp = req.send().await
-                .with_context(|| format!("Failed to list s3://{}/{}", self.bucket, prefix))?;
-
-            if let Some(ref contents) = resp.contents {
-                keys.extend(
-                    contents.iter().filter_map(|obj| obj.key()).map(|key| key.to_string())
-                );
-            }
-
-            match resp.next_continuation_token().map(|t| t.to_string()) {
-                Some(next) => continuation_token = Some(next),
-                None => break,
-            }
-        }
-
-        Ok(keys)
     }
 
     async fn put_object(&self, key: &str, data: &[u8], content_type: &str) -> Result<()> {

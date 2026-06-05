@@ -17,7 +17,7 @@ use futures::stream::{self, StreamExt};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use analysis::ModelConfig;
-use input::{fetch_email, resolve_sources, EmailSource};
+use input::{fetch_email, resolve_sources};
 use output::{Output, Verbosity};
 use storage::Storage;
 
@@ -97,12 +97,12 @@ async fn process_emails(
     };
 
     let storage = Storage::from_uri(&storage_dir, s3_client.clone())?;
-    let sources = resolve_sources(&paths, s3_client.as_ref()).await?;
+    let sources = resolve_sources(&paths).await?;
     let out = Output::new(verbosity, std::io::IsTerminal::is_terminal(&std::io::stderr()), sources.len() as u64);
     let errors = AtomicU64::new(0);
     let total = sources.len() as u64;
 
-    process_sources(&bedrock_client, &model_config, &storage, &s3_client, &sources, &out, &errors, concurrency).await;
+    process_sources(&bedrock_client, &model_config, &storage, &sources, &out, &errors, concurrency).await;
 
     out.finish(total, errors.load(Ordering::Relaxed));
     Ok(())
@@ -112,8 +112,7 @@ async fn process_sources(
     bedrock_client: &BedrockClient,
     model_config: &ModelConfig,
     storage: &Storage,
-    s3_client: &Option<S3Client>,
-    sources: &[EmailSource],
+    sources: &[input::EmailSource],
     out: &Output,
     errors: &AtomicU64,
     concurrency: usize,
@@ -121,7 +120,7 @@ async fn process_sources(
     stream::iter(sources.iter())
         .for_each_concurrent(concurrency, |source| async move {
             let name = source.short_name();
-            let raw = match fetch_email(source, s3_client.as_ref()).await {
+            let raw = match fetch_email(source).await {
                 Ok(data) => data,
                 Err(e) => {
                     out.error(&format!("{source}: {e}"));

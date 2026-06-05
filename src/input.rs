@@ -1,78 +1,36 @@
 use anyhow::{Context, Result};
-use aws_sdk_s3::Client as S3Client;
 use std::path::{Path, PathBuf};
 
 use crate::s3::ParmailS3Client;
 
-/// Manages email source resolution and fetching
-pub struct EmailFetcher {
-    s3_client: Option<S3Client>,
+/// Represents an email with its raw data
+pub struct Email {
+    data: Vec<u8>,
 }
 
-impl EmailFetcher {
-    pub fn new(s3_client: Option<S3Client>) -> Self {
-        Self { s3_client }
-    }
+impl Email {
+    /// Load email from a path (local file or s3:// URI)
+    pub async fn from(source: &str) -> Result<Self> {
+        assert!(!source.is_empty(), "source must not be empty");
 
-    pub async fn resolve_sources(&self, paths: &[String]) -> Result<Vec<EmailSource>> {
-        let mut sources = Vec::new();
-
-        for p in paths {
-            match parse_uri(p) {
-                Uri::S3 { bucket, prefix } => {
-                    let client = self.s3_client.as_ref().context("S3 path provided but AWS is not configured")?;
-                    let parmail_client = ParmailS3Client::new(client.clone(), bucket.clone());
-                    let keys = parmail_client.list_objects_with_prefix(&prefix).await?;
-                    for key in keys {
-                        sources.push(EmailSource::S3 { bucket: bucket.clone(), key });
-                    }
-                }
-                Uri::Local(path) => {
-                    match (path.is_file(), path.is_dir()) {
-                        (true, _) => sources.push(EmailSource::Local(path)),
-                        (_, true) => walk_dir(&path, &mut sources)?,
-                        _ => anyhow::bail!("Path does not exist: {}", path.display()),
-                    }
-                }
-            }
-        }
-
-        sources.sort_by(|a, b| a.to_string().cmp(&b.to_string()));
-        sources.dedup_by(|a, b| a.to_string() == b.to_string());
-        Ok(sources)
-    }
-
-    pub async fn fetch_email(&self, source: &EmailSource) -> Result<Vec<u8>> {
-        match source {
-            EmailSource::Local(path) => {
-                tokio::fs::read(path)
+        let data = match parse_uri(source) {
+            Uri::Local(path) => {
+                tokio::fs::read(&path)
                     .await
-                    .with_context(|| format!("Failed to read {}", path.display()))
+                    .with_context(|| format!("Failed to read {}", path.display()))?
             }
-            EmailSource::S3 { bucket, key } => {
-                let client = self.s3_client.as_ref().context("S3 path but AWS is not configured")?;
-                let parmail_client = ParmailS3Client::new(client.clone(), bucket.clone());
-                parmail_client.get_data(key).await
+            Uri::S3 { bucket, key } => {
+                let client = ParmailS3Client::from_bucket(bucket).await;
+                client.get_data(&key).await?
             }
-        }
+        };
+
+        Ok(Self { data })
     }
-}
 
-/// Fetch email data from a source string (file path or s3:// URI)
-/// Returns error if source doesn't exist, otherwise always returns data
-pub async fn get_email(source: &str) -> Result<Vec<u8>> {
-    assert!(!source.is_empty(), "source must not be empty");
-
-    match parse_uri(source) {
-        Uri::Local(path) => {
-            tokio::fs::read(&path)
-                .await
-                .with_context(|| format!("Failed to read {}", path.display()))
-        }
-        Uri::S3 { bucket, prefix } => {
-            let parmail_client = ParmailS3Client::from_bucket(bucket).await;
-            parmail_client.get_data(&prefix).await
-        }
+    /// Get the raw email bytes
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.data
     }
 }
 
@@ -108,33 +66,63 @@ impl EmailSource {
     }
 }
 
-// Legacy functions for backward compatibility - prefer using EmailFetcher
-pub async fn resolve_sources(paths: &[String], s3_client: Option<&S3Client>) -> Result<Vec<EmailSource>> {
-    let fetcher = EmailFetcher::new(s3_client.cloned());
-    fetcher.resolve_sources(paths).await
+pub async fn resolve_sources(paths: &[String]) -> Result<Vec<EmailSource>> {
+    let mut sources = Vec::new();
+
+    for p in paths {
+        match parse_uri(p) {
+            Uri::S3 { bucket, key: prefix } => {
+                let client = ParmailS3Client::from_bucket(bucket.clone()).await;
+                let keys = client.list_objects(&prefix).await?;
+                for key in keys {
+                    sources.push(EmailSource::S3 { bucket: bucket.clone(), key });
+                }
+            }
+            Uri::Local(path) => {
+                match (path.is_file(), path.is_dir()) {
+                    (true, _) => sources.push(EmailSource::Local(path)),
+                    (_, true) => walk_dir(&path, &mut sources)?,
+                    _ => anyhow::bail!("Path does not exist: {}", path.display()),
+                }
+            }
+        }
+    }
+
+    sources.sort_by(|a, b| a.to_string().cmp(&b.to_string()));
+    sources.dedup_by(|a, b| a.to_string() == b.to_string());
+    Ok(sources)
 }
 
-pub async fn fetch_email(source: &EmailSource, s3_client: Option<&S3Client>) -> Result<Vec<u8>> {
-    let fetcher = EmailFetcher::new(s3_client.cloned());
-    fetcher.fetch_email(source).await
+pub async fn fetch_email(source: &EmailSource) -> Result<Vec<u8>> {
+    match source {
+        EmailSource::Local(path) => {
+            tokio::fs::read(path)
+                .await
+                .with_context(|| format!("Failed to read {}", path.display()))
+        }
+        EmailSource::S3 { bucket, key } => {
+            let client = ParmailS3Client::from_bucket(bucket.clone()).await;
+            client.get_data(key).await
+        }
+    }
 }
 
 enum Uri {
-    S3 { bucket: String, prefix: String },
+    S3 { bucket: String, key: String },
     Local(PathBuf),
 }
 
 fn parse_uri(input: &str) -> Uri {
     match input {
         s if s.starts_with("s3://") => {
-            let rest = &s[5..]; // strip "s3://"
-            let (bucket, prefix) = match rest.split_once('/') {
-                Some((b, p)) => (b.to_string(), p.to_string()),
+            let rest = &s[5..];
+            let (bucket, key) = match rest.split_once('/') {
+                Some((b, k)) => (b.to_string(), k.to_string()),
                 None => (rest.to_string(), String::new()),
             };
-            Uri::S3 { bucket, prefix }
+            Uri::S3 { bucket, key }
         }
-        s if s.starts_with("file://") => Uri::Local(PathBuf::from(&s[7..])), // strip "file://"
+        s if s.starts_with("file://") => Uri::Local(PathBuf::from(&s[7..])),
         s => Uri::Local(PathBuf::from(s)),
     }
 }
