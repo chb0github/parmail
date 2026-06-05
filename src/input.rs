@@ -127,16 +127,17 @@ enum Uri {
 }
 
 fn parse_uri(input: &str) -> Uri {
-    if let Some(rest) = input.strip_prefix("s3://") {
-        let (bucket, prefix) = match rest.split_once('/') {
-            Some((b, p)) => (b.to_string(), p.to_string()),
-            None => (rest.to_string(), String::new()),
-        };
-        Uri::S3 { bucket, prefix }
-    } else if let Some(rest) = input.strip_prefix("file://") {
-        Uri::Local(PathBuf::from(rest))
-    } else {
-        Uri::Local(PathBuf::from(input))
+    match input {
+        s if s.starts_with("s3://") => {
+            let rest = &s[5..]; // strip "s3://"
+            let (bucket, prefix) = match rest.split_once('/') {
+                Some((b, p)) => (b.to_string(), p.to_string()),
+                None => (rest.to_string(), String::new()),
+            };
+            Uri::S3 { bucket, prefix }
+        }
+        s if s.starts_with("file://") => Uri::Local(PathBuf::from(&s[7..])), // strip "file://"
+        s => Uri::Local(PathBuf::from(s)),
     }
 }
 
