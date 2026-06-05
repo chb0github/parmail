@@ -24,6 +24,30 @@ impl ParmailS3Client {
         self.list_objects(prefix).await
     }
 
+    /// Get object data from S3 by key
+    /// Returns error if object doesn't exist, otherwise always returns data
+    pub async fn get_data(&self, key: &str) -> Result<Vec<u8>> {
+        assert!(!key.is_empty(), "key must not be empty");
+
+        let resp = self.client
+            .get_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .send()
+            .await
+            .with_context(|| format!("Failed to fetch s3://{}/{}", self.bucket, key))?;
+
+        let bytes = resp
+            .body
+            .collect()
+            .await
+            .context("Failed to read S3 object body")?
+            .into_bytes()
+            .to_vec();
+
+        Ok(bytes)
+    }
+
     /// Store processing results to S3
     /// Returns the S3 key root path (e.g., "output/68612578126e984c/")
     pub async fn add_result(
