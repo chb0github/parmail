@@ -9,10 +9,10 @@ def execute:
   map(select(length > 1)) |
   length as $total |
   [
-    {field: "from_name",   agree: agree(.mail_pieces[0].from_address.name),   total: $total},
-    {field: "from_street", agree: agree(.mail_pieces[0].from_address.street), total: $total},
-    {field: "from_city",   agree: agree(.mail_pieces[0].from_address.city),   total: $total},
-    {field: "mail_type",   agree: agree(.mail_pieces[0].mail_type),           total: $total},
-    {field: "to_name",     agree: agree(.mail_pieces[0].to_address.name),     total: $total}
+    {field: "from_name",   agree: agree(.mail_pieces[0].from_address | normalize_address | .name),   total: $total},
+    {field: "from_street", agree: agree(.mail_pieces[0].from_address | normalize_address | .street), total: $total},
+    {field: "from_city",   agree: agree(.mail_pieces[0].from_address | normalize_address | .city),   total: $total},
+    {field: "mail_type",   agree: agree(.mail_pieces[0].mail_type),                                  total: $total},
+    {field: "to_name",     agree: agree(.mail_pieces[0].to_address | normalize_address | .name),     total: $total}
   ] |
   map(. + {pct: (.agree / .total * 1000 | round / 10)});

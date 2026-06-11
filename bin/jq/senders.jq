@@ -2,13 +2,7 @@ include "shared";
 def describe: "Sender frequency with full address breakdown";
 def execute:
   map(.mail_pieces) | flatten |
-  map({
-    name: .from_address?.name,
-    street: .from_address?.street,
-    city: .from_address?.city,
-    state: .from_address?.state,
-    zip: .from_address?.zip
-  }) |
+  map(.from_address | normalize_address) |
   group_by([.name, .street, .city, .state, .zip]) |
   map({
     name: .[0].name,

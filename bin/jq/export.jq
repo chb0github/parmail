@@ -6,6 +6,8 @@ def execute:
     .[0].model_id as $model |
     map(. as $email |
       $email.mail_pieces[] |
+      (.to_address | normalize_address) as $to |
+      (.from_address | normalize_address) as $from |
       {
         model: $model,
         email_id: $email.id,
@@ -13,19 +15,19 @@ def execute:
         received_date: $email.received_date,
         email_subject: $email.email_subject,
         email_message_id: $email.email_message_id,
-        to_name: (.to_address.name // ""),
-        to_street: (.to_address.street // ""),
-        to_city: (.to_address.city // ""),
-        to_state: (.to_address.state // ""),
-        to_zip: (.to_address.zip // ""),
-        to_resolved: .to_address.resolved,
+        to_name: ($to.name // ""),
+        to_street: ($to.street // ""),
+        to_city: ($to.city // ""),
+        to_state: ($to.state // ""),
+        to_zip: ($to.zip // ""),
+        to_resolved: $to.resolved,
         piece_id: .id,
-        from_name: (.from_address.name // ""),
-        from_street: (.from_address.street // ""),
-        from_city: (.from_address.city // ""),
-        from_state: (.from_address.state // ""),
-        from_zip: (.from_address.zip // ""),
-        from_resolved: .from_address.resolved,
+        from_name: ($from.name // ""),
+        from_street: ($from.street // ""),
+        from_city: ($from.city // ""),
+        from_state: ($from.state // ""),
+        from_zip: ($from.zip // ""),
+        from_resolved: $from.resolved,
         mail_type: .mail_type,
         confidence: .confidence,
         postmark_date: (.postmark_date // ""),
