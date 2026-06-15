@@ -3,11 +3,11 @@ use aws_sdk_bedrockruntime::Client as BedrockClient;
 use aws_sdk_s3::Client as S3Client;
 use lambda_runtime::{service_fn, LambdaEvent};
 
-use crate::analysis::ModelConfig;
+use crate::extractor::analysis::ModelConfig;
+use crate::extractor::processor::process_raw_email;
+use crate::extractor::storage::Storage;
 use crate::input;
 use crate::models::S3Event;
-use crate::processor::process_raw_email;
-use crate::storage::Storage;
 
 type LambdaError = Box<dyn std::error::Error + Send + Sync>;
 

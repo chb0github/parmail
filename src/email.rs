@@ -9,14 +9,15 @@ pub struct ExtractedImage {
     pub data: Vec<u8>,
 }
 
-pub struct EmailInfo {
+pub struct Header {
     pub subject: String,
     pub from: String,
+    pub from_address: String,
     pub date: String,
     pub message_id: String,
 }
 
-impl EmailInfo {
+impl Header {
     pub fn id(&self) -> String {
         format!("{:016x}", xxh3_64(self.message_id.as_bytes()))
     }
@@ -30,28 +31,93 @@ impl EmailInfo {
     }
 }
 
-pub struct ParsedEmail {
-    pub info: EmailInfo,
+pub struct Email {
+    pub info: Header,
+    pub body: Option<String>,
     pub images: Vec<ExtractedImage>,
 }
 
-pub fn parse_email(raw_email: &[u8]) -> Result<ParsedEmail> {
+pub fn parse_email(raw_email: &[u8]) -> Result<Email> {
     let message = MessageParser::default()
         .parse(raw_email)
         .context("Failed to parse email")?;
 
     let subject = message.subject().unwrap_or("unknown").to_string();
 
-    let from = extract_from(&message);
+    let (from, from_address) = extract_from(&message);
 
     let date = extract_date(&message);
 
-    let message_id = message
-        .message_id()
-        .unwrap_or("unknown")
-        .to_string();
+    let message_id = message.message_id().unwrap_or("unknown").to_string();
 
-    let images: Vec<ExtractedImage> = message
+    let body = extract_body(&message);
+    let images = extract_images(&message);
+
+    Ok(Email {
+        info: Header {
+            subject,
+            from,
+            from_address,
+            date,
+            message_id,
+        },
+        body,
+        images,
+    })
+}
+
+fn extract_date(message: &mail_parser::Message) -> String {
+    message
+        .date()
+        .map(|d| {
+            format!(
+                "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+                d.year, d.month, d.day, d.hour, d.minute, d.second
+            )
+        })
+        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339())
+}
+
+/// Returns (display_name_or_address, raw_email_address)
+fn extract_from(message: &mail_parser::Message) -> (String, String) {
+    match message.from() {
+        Some(MailAddress::List(addrs)) => {
+            let first = addrs.first();
+            let display = first
+                .and_then(|a| {
+                    a.name
+                        .as_ref()
+                        .map(|n| n.to_string())
+                        .or_else(|| a.address.as_ref().map(|a| a.to_string()))
+                })
+                .unwrap_or_else(|| "unknown".to_string());
+            let address = first
+                .and_then(|a| a.address.as_ref().map(|a| a.to_string()))
+                .unwrap_or_else(|| "unknown".to_string());
+            (display, address)
+        }
+        Some(MailAddress::Group(groups)) => {
+            let name = groups
+                .first()
+                .and_then(|g| g.name.as_ref())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "unknown".to_string());
+            (name.clone(), name)
+        }
+        _ => ("unknown".to_string(), "unknown".to_string()),
+    }
+}
+
+fn extract_body(message: &mail_parser::Message) -> Option<String> {
+    message
+        .text_body
+        .iter()
+        .map(|part| part.to_string())
+        .reduce(|a, b| a + b.as_str())
+}
+
+fn extract_images(message: &mail_parser::Message) -> Vec<ExtractedImage> {
+    message
         .parts
         .iter()
         .filter(|part| extract_content_type(part).starts_with("image/"))
@@ -69,49 +135,7 @@ pub fn parse_email(raw_email: &[u8]) -> Result<ParsedEmail> {
                 data,
             })
         })
-        .collect();
-
-    Ok(ParsedEmail {
-        info: EmailInfo {
-            subject,
-            from,
-            date,
-            message_id,
-        },
-        images,
-    })
-}
-
-fn extract_date(message: &mail_parser::Message) -> String {
-    message
-        .date()
-        .map(|d| {
-            format!(
-                "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-                d.year, d.month, d.day, d.hour, d.minute, d.second
-            )
-        })
-        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339())
-}
-
-fn extract_from(message: &mail_parser::Message) -> String {
-    match message.from() {
-        Some(MailAddress::List(addrs)) => addrs
-            .first()
-            .and_then(|a| {
-                a.name
-                    .as_ref()
-                    .map(|n| n.to_string())
-                    .or_else(|| a.address.as_ref().map(|a| a.to_string()))
-            })
-            .unwrap_or_else(|| "unknown".to_string()),
-        Some(MailAddress::Group(groups)) => groups
-            .first()
-            .and_then(|g| g.name.as_ref())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "unknown".to_string()),
-        _ => "unknown".to_string(),
-    }
+        .collect()
 }
 
 fn extract_content_type(part: &mail_parser::MessagePart) -> String {
@@ -139,7 +163,8 @@ pub fn is_content_image(filename: &str) -> bool {
 }
 
 pub fn extract_piece_id(filename: &str) -> String {
-    let stem = filename.strip_suffix(".jpg")
+    let stem = filename
+        .strip_suffix(".jpg")
         .or_else(|| filename.strip_suffix(".jpeg"))
         .or_else(|| filename.strip_suffix(".png"))
         .unwrap_or(filename);
@@ -170,7 +195,7 @@ pub fn group_images_by_piece(images: Vec<ExtractedImage>) -> IndexMap<String, Ve
 /// Returns borrowed slices (mailer_bytes, content_bytes) for the first mail piece
 /// If email contains multiple pieces, only the first piece's images are returned
 /// Either or both images can be None if not present in the email
-pub fn get_images(parsed: &ParsedEmail) -> (Option<&[u8]>, Option<&[u8]>) {
+pub fn get_images(parsed: &Email) -> (Option<&[u8]>, Option<&[u8]>) {
     if parsed.images.is_empty() {
         return (None, None);
     }
@@ -195,7 +220,9 @@ pub fn get_images(parsed: &ParsedEmail) -> (Option<&[u8]>, Option<&[u8]>) {
     (mailer, content)
 }
 
-fn group_images_by_piece_ref(images: &[ExtractedImage]) -> indexmap::IndexMap<String, Vec<&ExtractedImage>> {
+fn group_images_by_piece_ref(
+    images: &[ExtractedImage],
+) -> indexmap::IndexMap<String, Vec<&ExtractedImage>> {
     let mut groups: indexmap::IndexMap<String, Vec<&ExtractedImage>> = indexmap::IndexMap::new();
     for image in images {
         let piece_id = extract_piece_id(&image.filename);

@@ -1,9 +1,5 @@
-pub mod analysis;
 pub mod email;
+pub mod extractor;
 pub mod input;
 pub mod models;
-pub mod output;
-pub mod processor;
 pub mod s3;
-pub mod storage;
-pub mod validate;

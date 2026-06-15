@@ -4,7 +4,7 @@ use aws_sdk_s3::primitives::ByteStream;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
-use crate::email::EmailInfo;
+use crate::email::Header;
 use crate::models::EmailManifest;
 
 pub enum StorageDir {
@@ -53,7 +53,7 @@ impl Storage {
         }
     }
 
-    pub async fn ensure_email_dir(&self, info: &EmailInfo) -> Result<StorageDir> {
+    pub async fn ensure_email_dir(&self, info: &Header) -> Result<StorageDir> {
         let email_id = info.id();
         match self {
             Storage::Local { base_dir } => {
@@ -123,7 +123,7 @@ impl Storage {
     }
 
     /// Returns the existing manifest if it exists and has no analysis errors.
-    pub async fn load_valid_manifest(&self, info: &EmailInfo) -> Option<EmailManifest> {
+    pub async fn load_valid_manifest(&self, info: &Header) -> Option<EmailManifest> {
         let email_id = info.id();
         let manifest = match self {
             Storage::Local { base_dir } => {

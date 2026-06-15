@@ -3,10 +3,10 @@ use aws_sdk_bedrockruntime::Client as BedrockClient;
 use futures::future::join_all;
 use xxhash_rust::xxh3::xxh3_64;
 
-use crate::analysis::{analyze_image, ModelConfig};
+use crate::extractor::analysis::{analyze_image, ModelConfig};
+use crate::extractor::storage::Storage;
 use crate::email::{group_images_by_piece, is_content_image, parse_email, ExtractedImage};
 use crate::models::{Address, ContentHash, EmailManifest, MailImage, MailPiece, MailType, TokenUsage};
-use crate::storage::Storage;
 
 /// Core email processing pipeline - used by both CLI and Lambda
 /// Input: raw email bytes

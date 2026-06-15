@@ -120,7 +120,10 @@ resource "aws_iam_role_policy" "ec2_mgmt_policy" {
           "lambda:ListVersionsByFunction",
           "lambda:GetFunctionConfiguration",
         ]
-        Resource = aws_lambda_function.parmail.arn
+        Resource = [
+          aws_lambda_function.interpreter.arn,
+          aws_lambda_function.confirmer.arn,
+        ]
       },
       {
         Sid    = "ECRAccess"
@@ -144,7 +147,10 @@ resource "aws_iam_role_policy" "ec2_mgmt_policy" {
           "ecr:DescribeImages",
           "ecr:ListImages",
         ]
-        Resource = aws_ecr_repository.parmail.arn
+        Resource = [
+          aws_ecr_repository.interpreter.arn,
+          aws_ecr_repository.confirmer.arn,
+        ]
       },
       {
         Sid    = "BedrockInvoke"
