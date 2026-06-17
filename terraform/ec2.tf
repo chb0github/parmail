@@ -121,7 +121,7 @@ resource "aws_iam_role_policy" "ec2_mgmt_policy" {
           "lambda:GetFunctionConfiguration",
         ]
         Resource = [
-          aws_lambda_function.interpreter.arn,
+          aws_lambda_function.extractor.arn,
           aws_lambda_function.confirmer.arn,
         ]
       },
@@ -148,7 +148,7 @@ resource "aws_iam_role_policy" "ec2_mgmt_policy" {
           "ecr:ListImages",
         ]
         Resource = [
-          aws_ecr_repository.interpreter.arn,
+          aws_ecr_repository.extractor.arn,
           aws_ecr_repository.confirmer.arn,
         ]
       },

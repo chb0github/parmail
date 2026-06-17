@@ -1,0 +1,1682 @@
+{
+  "version": 4,
+  "terraform_version": "1.15.6",
+  "serial": 146,
+  "lineage": "38157c54-481f-e764-b281-2d50aa899908",
+  "outputs": {
+    "confirmer_function_name": {
+      "value": "parmail-confirmer",
+      "type": "string"
+    },
+    "domain_name": {
+      "value": "parmail.thetaone.io",
+      "type": "string"
+    },
+    "ecr_confirmer_url": {
+      "value": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/confirmer",
+      "type": "string"
+    },
+    "ecr_extractor_url": {
+      "value": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/extractor",
+      "type": "string"
+    },
+    "email_address": {
+      "value": "usps@parmail.thetaone.io",
+      "type": "string"
+    },
+    "extractor_function_name": {
+      "value": "parmail-extractor",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "data",
+      "type": "aws_ami",
+      "name": "al2023_arm",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "data",
+      "type": "aws_caller_identity",
+      "name": "current",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "account_id": "692140489268",
+            "arn": "arn:aws:iam::692140489268:user/cbongiorno",
+            "id": "692140489268",
+            "user_id": "AIDA2CJWJXI2AKGZ5TJNO"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "aws_ecr_authorization_token",
+      "name": "token",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "authorization_token": "QVdTOmV5SndZWGxzYjJGa0lqb2ljRXBvUzB3dldqVk5lRTVqT1Zadk5saDRVVzVvTkVSVFFtZFVMM1E0VjNOQ015OVJSbFZ6ZEhObGVrNVVRMlE0SzFKQk4ySllZbkV6TDNZclRFVnNRa2R2V1RsMllsUnNTbWRsYW5KdE1DdGtMM0UyTkhJeE0xUTBTQzlOVW5sVmNFRlhTWEZWVFZSSlJGRm5NemRSU1ZSVlltOTBOM1JNYUVOMFptVnhhSGQzYkcxa04xSjVObFpLVlU5RlIyazFRVVpCZEdwMVVXVXhOemhRYzJ0b2FuZG1ja2xNWVRWMGQwUnFlRGg1VmpVcldtWXhVMlZyTkd0bWQyMVpjalphTVVsemVUUkxaVzAwUm1nclVYZE5MMDU2YURsS05HVjVOVGRzWmtvdk9ITkhhR1ZDYUROdFpWRTFaV0pNTkVRemJHdEJLeTlCUldvNWIyUkRNMXBUU1daa0wxUndhRTlsV0ZWQmRVczBlRVZWZWtJMGNHcE9NM2t3V25Vd015OXVVWHBTU0RGaU1FMVRjRkpsUzNCRlIxQnJUVkJaWml0M1JURlZla1prU0VobGIyWXphVGwwYTFGeVowbG5kMEpwTVhWWFMxaGpPVGxPUnpaWE1IaHZZbEZCVUZGaVZEWmlOMjA1VFZOUFl6Rm9jbFUwT1ZZeWJETk5lbFpFY0VoMU0wY3hTU3RQUlVrekszVmpTUzl2Y1hBMmVHcHFkVll4Y3pWbloxVkhNMFJqZVV0TGJtOUNUU3RXVkhaS2NqZHdSREUzYkZoVVZqaGtWSEJITkdWVVVFdE9aVzgwVkVaRGRVYzVSM0pPY2t4WVZFOXVaVFF4VGpCWlkxaGxUMlpHYVhoeGRXZEpMM2xvYkdKSVREbExhSFZWWXpKclVVNHliVVpUU1hKeFoxZGllV1ZRUjNkc2IwbDZiRlpRZEc4eVMyUktSWEl6YWxnd1FqVTNWelZuU21wYVZXRnNOQzluWjBGdlZYVkhNa3RwV0c0NFdreENVa0lyVGxaT1JWbG9iRmhCVkhBMVNWQkxlSGQ2VjNRdllVVTVSMWQ1VFZGdFYzcFJlREJPYmxSdlZFVTVNVFZZT1hoT00xcEhjVkZsVlN0aGRHUjRNekp0TlVSbFFXY3hPU3R6TW5VdlJWaE9VRmgyVVdwTmFURXZZVXd5VDB0bmF6RXllbEZUSzB4dk5VWTVjRFpLYXl0VmEwUlRSV1pVYjJ4aE1HaGxhMUJQV2twS1lYUlNUa0oxSzBaTVJIUk5NMEZ5WmtZclYySTJhM1pwTmxCVlNEaERZVXBoU0dORU16ZHVZM2wxYVRVelJGbHJRa1pFZDNWNlZscFBOVWRVT0hFMFptNDRlVWxGZUhkSFl6VnlRblZyVTJ4WFJWZDRTeTgwVERad1ZXRndZbmRaZWpjNUwxWlZZMEZrZVZWSlIwRkxhbkF2YWpjd1RYWXpNbmN2TDNjd1VpdDVXa1I0VUd4TmJFZFVVbTkzVUVZMGVVWm1abnBQYVM4elpWZzJTVW8xVUdKbkwyZGxaRXhsWWpreE1VMVRUbk5IUVdOUVJIQndNSEpoUVhWcVEwTlRORU5TWWpkaFRIcEhTM2RKUzNwbFlUSjNVRXN6WlRjckx6WklMekJaVURoT2JrRnJiMmhHU0U1eVVrZFlOak5NZUZFNFVUSjVjWGhNWnk4eWRERnVPRUphVUhWcVIzcEtSSGxIZDJaa0wzRTJRa05PYWpFMlFscFBhREJFT1hFMmRtUnFNMDFSYWpoWlZUSmxjMk5MYldVclFVVkxWazFKTVRrM2MyWndSa0ZDVjFZMGRYVTNia3RtTWtjeFpqWkJiQ0lzSW1SaGRHRnJaWGtpT2lKQlVVVkNRVWhvZDIwd1dXRkpVMHBsVW5SS2JUVnVNVWMyZFhGbFpXdFlkVzlZV0ZCbE5WVkdZMlU1VW5FNEx6RTBkMEZCUVVnMGQyWkJXVXBMYjFwSmFIWmpUa0ZSWTBkdlJ6aDNZbEZKUWtGRVFtOUNaMnR4YUd0cFJ6bDNNRUpDZDBWM1NHZFpTbGxKV2tsQlYxVkVRa0ZGZFUxQ1JVVkVUMkpuWkhaU2NrUjVVM0J3UjJzNFkzZEpRa1ZKUVRkck9WZGlSRUpWTVhwMlFqWllVMWsxUmtsWWN6Qm9NamRrWW1RM01qbFNWekZFU0dSU2N6VkJOMlpFVlZGUGVHTm1SVUVyZEZOM1pqVkhTR2xpV25Zd1pGWTFielJ0U0ZCRUswWmlaMkU0UFNJc0luWmxjbk5wYjI0aU9pSXlJaXdpZEhsd1pTSTZJa1JCVkVGZlMwVlpJaXdpWlhod2FYSmhkR2x2YmlJNk1UYzRNVGN3TkRZek5IMD0=",
+            "expires_at": "2026-06-17T13:57:14Z",
+            "id": "us-east-1",
+            "password": "eyJwYXlsb2FkIjoicEpoS0wvWjVNeE5jOVZvNlh4UW5oNERTQmdUL3Q4V3NCMy9RRlVzdHNlek5UQ2Q4K1JBN2JYYnEzL3YrTEVsQkdvWTl2YlRsSmdlanJtMCtkL3E2NHIxM1Q0SC9NUnlVcEFXSXFVTVRJRFFnMzdRSVRVYm90N3RMaEN0ZmVxaHd3bG1kN1J5NlZKVU9FR2k1QUZBdGp1UWUxNzhQc2toandmcklMYTV0d0RqeDh5VjUrWmYxU2VrNGtmd21ZcjZaMUlzeTRLZW00RmgrUXdNL056aDlKNGV5NTdsZkovOHNHaGVCaDNtZVE1ZWJMNEQzbGtBKy9BRWo5b2RDM1pTSWZkL1RwaE9lWFVBdUs0eEVVekI0cGpOM3kwWnUwMy9uUXpSSDFiME1TcFJlS3BFR1BrTVBZZit3RTFVekZkSEhlb2YzaTl0a1FyZ0lnd0JpMXVXS1hjOTlORzZXMHhvYlFBUFFiVDZiN205TVNPYzFoclU0OVYybDNNelZEcEh1M0cxSStPRUkzK3VjSS9vcXA2eGpqdVYxczVnZ1VHM0RjeUtLbm9CTStWVHZKcjdwRDE3bFhUVjhkVHBHNGVUUEtOZW80VEZDdUc5R3JOckxYVE9uZTQxTjBZY1hlT2ZGaXhxdWdJL3lobGJITDlLaHVVYzJrUU4ybUZTSXJxZ1dieWVQR3dsb0l6bFZQdG8yS2RKRXIzalgwQjU3VzVnSmpaVWFsNC9nZ0FvVXVHMktpWG44WkxCUkIrTlZORVlobFhBVHA1SVBLeHd6V3QvYUU5R1d5TVFtV3pReDBOblRvVEU5MTVYOXhOM1pHcVFlVSthdGR4MzJtNURlQWcxOStzMnUvRVhOUFh2UWpNaTEvYUwyT0tnazEyelFTK0xvNUY5cDZKaytVa0RTRWZUb2xhMGhla1BPWkpKYXRSTkJ1K0ZMRHRNM0FyZkYrV2I2a3ZpNlBVSDhDYUphSGNEMzduY3l1aTUzRFlrQkZEd3V6VlpPNUdUOHE0Zm44eUlFeHdHYzVyQnVrU2xXRVd4Sy80TDZwVWFwYndZejc5L1ZVY0FkeVVJR0FLanAvajcwTXYzMncvL3cwUit5WkR4UGxNbEdUUm93UEY0eUZmZnpPaS8zZVg2SUo1UGJnL2dlZExlYjkxMU1TTnNHQWNQRHBwMHJhQXVqQ0NTNENSYjdhTHpHS3dJS3plYTJ3UEszZTcrLzZILzBZUDhObkFrb2hGSE5yUkdYNjNMeFE4UTJ5cXhMZy8ydDFuOEJaUHVqR3pKRHlHd2ZkL3E2QkNOajE2QlpPaDBEOXE2dmRqM01RajhZVTJlc2NLbWUrQUVLVk1JMTk3c2ZwRkFCV1Y0dXU3bktmMkcxZjZBbCIsImRhdGFrZXkiOiJBUUVCQUhod20wWWFJU0plUnRKbTVuMUc2dXFlZWtYdW9YWFBlNVVGY2U5UnE4LzE0d0FBQUg0d2ZBWUpLb1pJaHZjTkFRY0dvRzh3YlFJQkFEQm9CZ2txaGtpRzl3MEJCd0V3SGdZSllJWklBV1VEQkFFdU1CRUVET2JnZHZSckR5U3BwR2s4Y3dJQkVJQTdrOVdiREJVMXp2QjZYU1k1RklYczBoMjdkYmQ3MjlSVzFESGRSczVBN2ZEVVFPeGNmRUErdFN3ZjVHSGliWnYwZFY1bzRtSFBEK0ZiZ2E4PSIsInZlcnNpb24iOiIyIiwidHlwZSI6IkRBVEFfS0VZIiwiZXhwaXJhdGlvbiI6MTc4MTcwNDYzNH0=",
+            "proxy_endpoint": "https://692140489268.dkr.ecr.us-east-1.amazonaws.com",
+            "registry_id": null,
+            "user_name": "AWS"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "authorization_token"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "password"
+              }
+            ]
+          ],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "aws_region",
+      "name": "current",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "description": "US East (N. Virginia)",
+            "endpoint": "ec2.us-east-1.amazonaws.com",
+            "id": "us-east-1",
+            "name": "us-east-1"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "aws_route53_zone",
+      "name": "parent",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:route53:::hostedzone/Z00889742ZF13IYOSM4M6",
+            "caller_reference": "25795ff6-e519-41f4-9736-de0dc3636a28",
+            "comment": "My business",
+            "id": "Z00889742ZF13IYOSM4M6",
+            "linked_service_description": null,
+            "linked_service_principal": null,
+            "name": "thetaone.io",
+            "name_servers": [
+              "ns-647.awsdns-16.net",
+              "ns-1345.awsdns-40.org",
+              "ns-26.awsdns-03.com",
+              "ns-1973.awsdns-54.co.uk"
+            ],
+            "primary_name_server": "ns-647.awsdns-16.net",
+            "private_zone": false,
+            "resource_record_set_count": 15,
+            "tags": {},
+            "vpc_id": null,
+            "zone_id": "Z00889742ZF13IYOSM4M6"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "aws_vpc",
+      "name": "default",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecr_repository",
+      "name": "confirmer",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:692140489268:repository/parmail/confirmer",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": true,
+            "id": "parmail/confirmer",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "parmail/confirmer",
+            "registry_id": "692140489268",
+            "repository_url": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/confirmer",
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecr_repository",
+      "name": "extractor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:692140489268:repository/parmail/extractor",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": true,
+            "id": "parmail/extractor",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "parmail/extractor",
+            "registry_id": "692140489268",
+            "repository_url": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/extractor",
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecr_repository",
+      "name": "interpreter",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:692140489268:repository/parmail/interpreter",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "parmail/interpreter",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "parmail/interpreter",
+            "registry_id": "692140489268",
+            "repository_url": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/interpreter",
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_instance_profile",
+      "name": "ec2_mgmt",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "confirmer_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::692140489268:role/parmail-confirmer-role",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2026-06-16T17:43:01Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "parmail-confirmer-role",
+            "inline_policy": [
+              {
+                "name": "parmail-confirmer-policy",
+                "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"s3:GetObject\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:s3:::parmail-692140489268/emails/*\"},{\"Action\":[\"ses:SendEmail\",\"ses:SendRawEmail\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:ses:us-east-1:692140489268:identity/parmail.thetaone.io\"},{\"Action\":[\"logs:CreateLogGroup\",\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:logs:us-east-1:692140489268:*\"}]}"
+              }
+            ],
+            "managed_policy_arns": [],
+            "max_session_duration": 3600,
+            "name": "parmail-confirmer-role",
+            "name_prefix": "",
+            "path": "/",
+            "permissions_boundary": "",
+            "tags": {},
+            "tags_all": {},
+            "unique_id": "AROA2CJWJXI2KPAMMBWUR"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "ec2_mgmt_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "lambda_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::692140489268:role/parmail-lambda-role",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2026-05-18T23:01:19Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "parmail-lambda-role",
+            "inline_policy": [
+              {
+                "name": "parmail-lambda-policy",
+                "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"s3:GetObject\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:s3:::parmail-692140489268/emails/*\"},{\"Action\":[\"s3:PutObject\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:s3:::parmail-692140489268/output/*\"},{\"Action\":[\"bedrock:InvokeModel\"],\"Effect\":\"Allow\",\"Resource\":[\"arn:aws:bedrock:*:692140489268:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0\",\"arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0\"]},{\"Action\":[\"logs:CreateLogGroup\",\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:logs:us-east-1:692140489268:*\"}]}"
+              }
+            ],
+            "managed_policy_arns": [],
+            "max_session_duration": 3600,
+            "name": "parmail-lambda-role",
+            "name_prefix": "",
+            "path": "/",
+            "permissions_boundary": "",
+            "tags": {},
+            "tags_all": {},
+            "unique_id": "AROA2CJWJXI2GDVTOXC4G"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "confirmer_policy",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "parmail-confirmer-role:parmail-confirmer-policy",
+            "name": "parmail-confirmer-policy",
+            "name_prefix": "",
+            "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"s3:GetObject\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:s3:::parmail-692140489268/emails/*\"},{\"Action\":[\"ses:SendEmail\",\"ses:SendRawEmail\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:ses:us-east-1:692140489268:identity/parmail.thetaone.io\"},{\"Action\":[\"logs:CreateLogGroup\",\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:logs:us-east-1:692140489268:*\"}]}",
+            "role": "parmail-confirmer-role"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.confirmer_role",
+            "aws_s3_bucket.parmail",
+            "data.aws_caller_identity.current",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "ec2_mgmt_policy",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "lambda_policy",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "parmail-lambda-role:parmail-lambda-policy",
+            "name": "parmail-lambda-policy",
+            "name_prefix": "",
+            "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"s3:GetObject\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:s3:::parmail-692140489268/emails/*\"},{\"Action\":[\"s3:PutObject\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:s3:::parmail-692140489268/output/*\"},{\"Action\":[\"bedrock:InvokeModel\"],\"Effect\":\"Allow\",\"Resource\":[\"arn:aws:bedrock:*:692140489268:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0\",\"arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0\"]},{\"Action\":[\"logs:CreateLogGroup\",\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:logs:us-east-1:692140489268:*\"}]}",
+            "role": "parmail-lambda-role"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.lambda_role",
+            "aws_s3_bucket.parmail",
+            "data.aws_caller_identity.current",
+            "data.aws_region.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_instance",
+      "name": "mgmt",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "managed",
+      "type": "aws_key_pair",
+      "name": "mgmt",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "confirmer",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "arm64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:692140489268:function:parmail-confirmer",
+            "code_sha256": "8b9539a4e9771b61b520f268c825c1419607dfe8373774c3eb4cb099ee549f8b",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [],
+            "description": "",
+            "environment": [
+              {
+                "variables": {
+                  "RUST_LOG": "parmail_confirmer=info"
+                }
+              }
+            ],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": null,
+            "function_name": "parmail-confirmer",
+            "handler": "",
+            "id": "parmail-confirmer",
+            "image_config": [
+              {
+                "command": [
+                  "lambda"
+                ],
+                "entry_point": [],
+                "working_directory": ""
+              }
+            ],
+            "image_uri": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/confirmer@sha256:8b9539a4e9771b61b520f268c825c1419607dfe8373774c3eb4cb099ee549f8b",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:692140489268:function:parmail-confirmer/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2026-06-17T01:50:49.000+0000",
+            "layers": [],
+            "logging_config": [
+              {
+                "application_log_level": "",
+                "log_format": "Text",
+                "log_group": "/aws/lambda/parmail-confirmer",
+                "system_log_level": ""
+              }
+            ],
+            "memory_size": 128,
+            "package_type": "Image",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:692140489268:function:parmail-confirmer:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:692140489268:function:parmail-confirmer:$LATEST/invocations",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::692140489268:role/parmail-confirmer-role",
+            "runtime": "",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "",
+            "source_code_size": 0,
+            "tags": {},
+            "tags_all": {},
+            "timeout": 30,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": []
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_ecr_repository.confirmer",
+            "aws_iam_role.confirmer_role",
+            "data.aws_caller_identity.current",
+            "data.aws_ecr_authorization_token.token",
+            "docker_registry_image.confirmer"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "extractor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "arm64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:692140489268:function:parmail-extractor",
+            "code_sha256": "66cb8091e2d0dab9029898de1ecd887939d925573fa9b0238f7ca6ec9cb7cc85",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [],
+            "description": "",
+            "environment": [
+              {
+                "variables": {
+                  "RUST_LOG": "parmail=info",
+                  "STORAGE_DIR": "s3://parmail-692140489268/output"
+                }
+              }
+            ],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": null,
+            "function_name": "parmail-extractor",
+            "handler": "",
+            "id": "parmail-extractor",
+            "image_config": [
+              {
+                "command": [
+                  "lambda"
+                ],
+                "entry_point": [],
+                "working_directory": ""
+              }
+            ],
+            "image_uri": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/extractor@sha256:66cb8091e2d0dab9029898de1ecd887939d925573fa9b0238f7ca6ec9cb7cc85",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:692140489268:function:parmail-extractor/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2026-06-17T01:50:49.142+0000",
+            "layers": [],
+            "logging_config": [
+              {
+                "application_log_level": "",
+                "log_format": "Text",
+                "log_group": "/aws/lambda/parmail-extractor",
+                "system_log_level": ""
+              }
+            ],
+            "memory_size": 512,
+            "package_type": "Image",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:692140489268:function:parmail-extractor:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:692140489268:function:parmail-extractor:$LATEST/invocations",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::692140489268:role/parmail-lambda-role",
+            "runtime": "",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "",
+            "source_code_size": 0,
+            "tags": {},
+            "tags_all": {},
+            "timeout": 300,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": []
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_ecr_repository.extractor",
+            "aws_iam_role.lambda_role",
+            "aws_s3_bucket.parmail",
+            "data.aws_caller_identity.current",
+            "data.aws_ecr_authorization_token.token",
+            "docker_registry_image.extractor"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_permission",
+      "name": "sns_confirmer",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "action": "lambda:InvokeFunction",
+            "event_source_token": null,
+            "function_name": "parmail-confirmer",
+            "function_url_auth_type": null,
+            "id": "AllowSNSInvoke",
+            "principal": "sns.amazonaws.com",
+            "principal_org_id": null,
+            "qualifier": "",
+            "source_account": null,
+            "source_arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify",
+            "statement_id": "AllowSNSInvoke",
+            "statement_id_prefix": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_ecr_repository.confirmer",
+            "aws_iam_role.confirmer_role",
+            "aws_lambda_function.confirmer",
+            "aws_sns_topic.email_notify",
+            "data.aws_caller_identity.current",
+            "data.aws_ecr_authorization_token.token",
+            "docker_registry_image.confirmer"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_permission",
+      "name": "sns_extractor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "action": "lambda:InvokeFunction",
+            "event_source_token": null,
+            "function_name": "parmail-extractor",
+            "function_url_auth_type": null,
+            "id": "AllowSNSInvoke",
+            "principal": "sns.amazonaws.com",
+            "principal_org_id": null,
+            "qualifier": "",
+            "source_account": null,
+            "source_arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify",
+            "statement_id": "AllowSNSInvoke",
+            "statement_id_prefix": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_ecr_repository.extractor",
+            "aws_iam_role.lambda_role",
+            "aws_lambda_function.extractor",
+            "aws_s3_bucket.parmail",
+            "aws_sns_topic.email_notify",
+            "data.aws_caller_identity.current",
+            "data.aws_ecr_authorization_token.token",
+            "docker_registry_image.extractor"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route53_record",
+      "name": "dmarc",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": null,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "_dmarc.parmail.thetaone.io",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z05105663OL6Z4HRWF81B__dmarc.parmail.thetaone.io_TXT",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "_dmarc.parmail.thetaone.io",
+            "records": [
+              "v=DMARC1; p=none; rua=mailto:usps@parmail.thetaone.io"
+            ],
+            "set_identifier": "",
+            "timeouts": null,
+            "ttl": 300,
+            "type": "TXT",
+            "weighted_routing_policy": [],
+            "zone_id": "Z05105663OL6Z4HRWF81B"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
+          "dependencies": [
+            "aws_route53_zone.parmail"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route53_record",
+      "name": "mx",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": null,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "parmail.thetaone.io",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z05105663OL6Z4HRWF81B_parmail.thetaone.io_MX",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "parmail.thetaone.io",
+            "records": [
+              "10 inbound-smtp.us-east-1.amazonaws.com"
+            ],
+            "set_identifier": "",
+            "timeouts": null,
+            "ttl": 300,
+            "type": "MX",
+            "weighted_routing_policy": [],
+            "zone_id": "Z05105663OL6Z4HRWF81B"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
+          "dependencies": [
+            "aws_route53_zone.parmail"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route53_record",
+      "name": "ses_dkim",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": null,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "dqlaw3cjec4dd2jktrskgg7bks63y6s2._domainkey.parmail.thetaone.io",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z05105663OL6Z4HRWF81B_dqlaw3cjec4dd2jktrskgg7bks63y6s2._domainkey.parmail.thetaone.io_CNAME",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "dqlaw3cjec4dd2jktrskgg7bks63y6s2._domainkey.parmail.thetaone.io",
+            "records": [
+              "dqlaw3cjec4dd2jktrskgg7bks63y6s2.dkim.amazonses.com"
+            ],
+            "set_identifier": "",
+            "timeouts": null,
+            "ttl": 300,
+            "type": "CNAME",
+            "weighted_routing_policy": [],
+            "zone_id": "Z05105663OL6Z4HRWF81B"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
+          "dependencies": [
+            "aws_route53_zone.parmail",
+            "aws_ses_domain_dkim.parmail",
+            "aws_ses_domain_identity.parmail"
+          ]
+        },
+        {
+          "index_key": 1,
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": null,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "322ylzjnlcalzkc5xo7pwsycw3ao4st5._domainkey.parmail.thetaone.io",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z05105663OL6Z4HRWF81B_322ylzjnlcalzkc5xo7pwsycw3ao4st5._domainkey.parmail.thetaone.io_CNAME",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "322ylzjnlcalzkc5xo7pwsycw3ao4st5._domainkey.parmail.thetaone.io",
+            "records": [
+              "322ylzjnlcalzkc5xo7pwsycw3ao4st5.dkim.amazonses.com"
+            ],
+            "set_identifier": "",
+            "timeouts": null,
+            "ttl": 300,
+            "type": "CNAME",
+            "weighted_routing_policy": [],
+            "zone_id": "Z05105663OL6Z4HRWF81B"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
+          "dependencies": [
+            "aws_route53_zone.parmail",
+            "aws_ses_domain_dkim.parmail",
+            "aws_ses_domain_identity.parmail"
+          ]
+        },
+        {
+          "index_key": 2,
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": null,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "lya2jckoemzqjzhgdry7r254zxoj5xtu._domainkey.parmail.thetaone.io",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z05105663OL6Z4HRWF81B_lya2jckoemzqjzhgdry7r254zxoj5xtu._domainkey.parmail.thetaone.io_CNAME",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "lya2jckoemzqjzhgdry7r254zxoj5xtu._domainkey.parmail.thetaone.io",
+            "records": [
+              "lya2jckoemzqjzhgdry7r254zxoj5xtu.dkim.amazonses.com"
+            ],
+            "set_identifier": "",
+            "timeouts": null,
+            "ttl": 300,
+            "type": "CNAME",
+            "weighted_routing_policy": [],
+            "zone_id": "Z05105663OL6Z4HRWF81B"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
+          "dependencies": [
+            "aws_route53_zone.parmail",
+            "aws_ses_domain_dkim.parmail",
+            "aws_ses_domain_identity.parmail"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route53_record",
+      "name": "ses_verification",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": null,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "_amazonses.parmail.thetaone.io",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z05105663OL6Z4HRWF81B__amazonses.parmail.thetaone.io_TXT",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "_amazonses.parmail.thetaone.io",
+            "records": [
+              "iRCOT3fuZvUlwgsurLHl2FXTFQnZrMQjOLibr8ccazA="
+            ],
+            "set_identifier": "",
+            "timeouts": null,
+            "ttl": 300,
+            "type": "TXT",
+            "weighted_routing_policy": [],
+            "zone_id": "Z05105663OL6Z4HRWF81B"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
+          "dependencies": [
+            "aws_route53_zone.parmail",
+            "aws_ses_domain_identity.parmail"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route53_record",
+      "name": "spf",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": null,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "parmail.thetaone.io",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z05105663OL6Z4HRWF81B_parmail.thetaone.io_TXT",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "parmail.thetaone.io",
+            "records": [
+              "v=spf1 include:amazonses.com ~all"
+            ],
+            "set_identifier": "",
+            "timeouts": null,
+            "ttl": 300,
+            "type": "TXT",
+            "weighted_routing_policy": [],
+            "zone_id": "Z05105663OL6Z4HRWF81B"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
+          "dependencies": [
+            "aws_route53_zone.parmail"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route53_record",
+      "name": "subdomain_ns",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "alias": [],
+            "allow_overwrite": null,
+            "cidr_routing_policy": [],
+            "failover_routing_policy": [],
+            "fqdn": "parmail.thetaone.io",
+            "geolocation_routing_policy": [],
+            "geoproximity_routing_policy": [],
+            "health_check_id": "",
+            "id": "Z00889742ZF13IYOSM4M6_parmail.thetaone.io_NS",
+            "latency_routing_policy": [],
+            "multivalue_answer_routing_policy": false,
+            "name": "parmail.thetaone.io",
+            "records": [
+              "ns-1416.awsdns-49.org",
+              "ns-1553.awsdns-02.co.uk",
+              "ns-363.awsdns-45.com",
+              "ns-837.awsdns-40.net"
+            ],
+            "set_identifier": "",
+            "timeouts": null,
+            "ttl": 300,
+            "type": "NS",
+            "weighted_routing_policy": [],
+            "zone_id": "Z00889742ZF13IYOSM4M6"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
+          "dependencies": [
+            "aws_route53_zone.parmail",
+            "data.aws_route53_zone.parent"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route53_zone",
+      "name": "parmail",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:route53:::hostedzone/Z05105663OL6Z4HRWF81B",
+            "comment": "Managed by Terraform",
+            "delegation_set_id": "",
+            "force_destroy": false,
+            "id": "Z05105663OL6Z4HRWF81B",
+            "name": "parmail.thetaone.io",
+            "name_servers": [
+              "ns-1416.awsdns-49.org",
+              "ns-1553.awsdns-02.co.uk",
+              "ns-363.awsdns-45.com",
+              "ns-837.awsdns-40.net"
+            ],
+            "primary_name_server": "ns-1553.awsdns-02.co.uk",
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null,
+            "vpc": [],
+            "zone_id": "Z05105663OL6Z4HRWF81B"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInVwZGF0ZSI6MTgwMDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket",
+      "name": "parmail",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "acceleration_status": "",
+            "acl": null,
+            "arn": "arn:aws:s3:::parmail-692140489268",
+            "bucket": "parmail-692140489268",
+            "bucket_domain_name": "parmail-692140489268.s3.amazonaws.com",
+            "bucket_prefix": "",
+            "bucket_regional_domain_name": "parmail-692140489268.s3.us-east-1.amazonaws.com",
+            "cors_rule": [],
+            "force_destroy": false,
+            "grant": [
+              {
+                "id": "ef3a3031319d0af0fdb68eedd18b73e17119558bb622564d081a8f2bf0952836",
+                "permissions": [
+                  "FULL_CONTROL"
+                ],
+                "type": "CanonicalUser",
+                "uri": ""
+              }
+            ],
+            "hosted_zone_id": "Z3AQBSTGFYJSTF",
+            "id": "parmail-692140489268",
+            "lifecycle_rule": [],
+            "logging": [],
+            "object_lock_configuration": [],
+            "object_lock_enabled": false,
+            "policy": "{\"Statement\":[{\"Action\":\"s3:PutObject\",\"Condition\":{\"StringEquals\":{\"AWS:SourceAccount\":\"692140489268\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ses.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::parmail-692140489268/emails/*\",\"Sid\":\"AllowSESPuts\"}],\"Version\":\"2012-10-17\"}",
+            "region": "us-east-1",
+            "replication_configuration": [],
+            "request_payer": "BucketOwner",
+            "server_side_encryption_configuration": [
+              {
+                "rule": [
+                  {
+                    "apply_server_side_encryption_by_default": [
+                      {
+                        "kms_master_key_id": "",
+                        "sse_algorithm": "AES256"
+                      }
+                    ],
+                    "bucket_key_enabled": false
+                  }
+                ]
+              }
+            ],
+            "tags": {},
+            "tags_all": {},
+            "timeouts": null,
+            "versioning": [
+              {
+                "enabled": false,
+                "mfa_delete": false
+              }
+            ],
+            "website": [],
+            "website_domain": null,
+            "website_endpoint": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInJlYWQiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.aws_caller_identity.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_notification",
+      "name": "email_notification",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "parmail-692140489268",
+            "eventbridge": false,
+            "id": "parmail-692140489268",
+            "lambda_function": [],
+            "queue": [],
+            "topic": [
+              {
+                "events": [
+                  "s3:ObjectCreated:*"
+                ],
+                "filter_prefix": "emails/",
+                "filter_suffix": "",
+                "id": "tf-s3-topic-20260616175114373800000001",
+                "topic_arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify"
+              }
+            ]
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.parmail",
+            "aws_sns_topic.email_notify",
+            "aws_sns_topic_policy.allow_s3",
+            "data.aws_caller_identity.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_policy",
+      "name": "allow_ses_write",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "parmail-692140489268",
+            "id": "parmail-692140489268",
+            "policy": "{\"Statement\":[{\"Action\":\"s3:PutObject\",\"Condition\":{\"StringEquals\":{\"AWS:SourceAccount\":\"692140489268\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ses.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::parmail-692140489268/emails/*\",\"Sid\":\"AllowSESPuts\"}],\"Version\":\"2012-10-17\"}"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.parmail",
+            "data.aws_caller_identity.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "ec2_mgmt",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": []
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ses_active_receipt_rule_set",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ses:us-east-1:692140489268:receipt-rule-set/parmail-rules",
+            "id": "parmail-rules",
+            "rule_set_name": "parmail-rules"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_ses_receipt_rule_set.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ses_domain_dkim",
+      "name": "parmail",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "dkim_tokens": [
+              "dqlaw3cjec4dd2jktrskgg7bks63y6s2",
+              "322ylzjnlcalzkc5xo7pwsycw3ao4st5",
+              "lya2jckoemzqjzhgdry7r254zxoj5xtu"
+            ],
+            "domain": "parmail.thetaone.io",
+            "id": "parmail.thetaone.io"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_ses_domain_identity.parmail"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ses_domain_identity",
+      "name": "parmail",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ses:us-east-1:692140489268:identity/parmail.thetaone.io",
+            "domain": "parmail.thetaone.io",
+            "id": "parmail.thetaone.io",
+            "verification_token": "iRCOT3fuZvUlwgsurLHl2FXTFQnZrMQjOLibr8ccazA="
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ses_domain_identity_verification",
+      "name": "parmail",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ses:us-east-1:692140489268:identity/parmail.thetaone.io",
+            "domain": "parmail.thetaone.io",
+            "id": "parmail.thetaone.io",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoyNzAwMDAwMDAwMDAwfX0=",
+          "dependencies": [
+            "aws_route53_record.ses_verification",
+            "aws_route53_zone.parmail",
+            "aws_ses_domain_identity.parmail"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ses_receipt_rule",
+      "name": "store_email",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "add_header_action": [],
+            "after": null,
+            "arn": "arn:aws:ses:us-east-1:692140489268:receipt-rule-set/parmail-rules:receipt-rule/parmail-store",
+            "bounce_action": [],
+            "enabled": true,
+            "id": "parmail-store",
+            "lambda_action": [],
+            "name": "parmail-store",
+            "recipients": [
+              "usps@parmail.thetaone.io"
+            ],
+            "rule_set_name": "parmail-rules",
+            "s3_action": [
+              {
+                "bucket_name": "parmail-692140489268",
+                "iam_role_arn": "",
+                "kms_key_arn": "",
+                "object_key_prefix": "emails/",
+                "position": 1,
+                "topic_arn": ""
+              }
+            ],
+            "scan_enabled": true,
+            "sns_action": [],
+            "stop_action": [],
+            "tls_policy": "Optional",
+            "workmail_action": []
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.parmail",
+            "aws_s3_bucket_policy.allow_ses_write",
+            "aws_ses_receipt_rule_set.main",
+            "data.aws_caller_identity.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ses_receipt_rule_set",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ses:us-east-1:692140489268:receipt-rule-set/parmail-rules",
+            "id": "parmail-rules",
+            "rule_set_name": "parmail-rules"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sns_topic",
+      "name": "email_notify",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "application_failure_feedback_role_arn": "",
+            "application_success_feedback_role_arn": "",
+            "application_success_feedback_sample_rate": 0,
+            "archive_policy": "",
+            "arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify",
+            "beginning_archive_time": "",
+            "content_based_deduplication": false,
+            "delivery_policy": "",
+            "display_name": "",
+            "fifo_throughput_scope": "",
+            "fifo_topic": false,
+            "firehose_failure_feedback_role_arn": "",
+            "firehose_success_feedback_role_arn": "",
+            "firehose_success_feedback_sample_rate": 0,
+            "http_failure_feedback_role_arn": "",
+            "http_success_feedback_role_arn": "",
+            "http_success_feedback_sample_rate": 0,
+            "id": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify",
+            "kms_master_key_id": "",
+            "lambda_failure_feedback_role_arn": "",
+            "lambda_success_feedback_role_arn": "",
+            "lambda_success_feedback_sample_rate": 0,
+            "name": "parmail-email-notify",
+            "name_prefix": "",
+            "owner": "692140489268",
+            "policy": "{\"Statement\":[{\"Action\":\"SNS:Publish\",\"Condition\":{\"ArnLike\":{\"aws:SourceArn\":\"arn:aws:s3:::parmail-692140489268\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"s3.amazonaws.com\"},\"Resource\":\"arn:aws:sns:us-east-1:692140489268:parmail-email-notify\"}],\"Version\":\"2012-10-17\"}",
+            "signature_version": 0,
+            "sqs_failure_feedback_role_arn": "",
+            "sqs_success_feedback_role_arn": "",
+            "sqs_success_feedback_sample_rate": 0,
+            "tags": {},
+            "tags_all": {},
+            "tracing_config": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sns_topic_policy",
+      "name": "allow_s3",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify",
+            "id": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify",
+            "owner": "692140489268",
+            "policy": "{\"Statement\":[{\"Action\":\"SNS:Publish\",\"Condition\":{\"ArnLike\":{\"aws:SourceArn\":\"arn:aws:s3:::parmail-692140489268\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"s3.amazonaws.com\"},\"Resource\":\"arn:aws:sns:us-east-1:692140489268:parmail-email-notify\"}],\"Version\":\"2012-10-17\"}"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.parmail",
+            "aws_sns_topic.email_notify",
+            "data.aws_caller_identity.current"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sns_topic_subscription",
+      "name": "confirmer",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify:ebbfd8e4-55a0-4f98-bd13-d8cfd7bb2dca",
+            "confirmation_timeout_in_minutes": 1,
+            "confirmation_was_authenticated": true,
+            "delivery_policy": "",
+            "endpoint": "arn:aws:lambda:us-east-1:692140489268:function:parmail-confirmer",
+            "endpoint_auto_confirms": false,
+            "filter_policy": "",
+            "filter_policy_scope": "",
+            "id": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify:ebbfd8e4-55a0-4f98-bd13-d8cfd7bb2dca",
+            "owner_id": "692140489268",
+            "pending_confirmation": false,
+            "protocol": "lambda",
+            "raw_message_delivery": false,
+            "redrive_policy": "",
+            "replay_policy": "",
+            "subscription_role_arn": "",
+            "topic_arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_ecr_repository.confirmer",
+            "aws_iam_role.confirmer_role",
+            "aws_lambda_function.confirmer",
+            "aws_sns_topic.email_notify",
+            "data.aws_caller_identity.current",
+            "data.aws_ecr_authorization_token.token",
+            "docker_registry_image.confirmer"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sns_topic_subscription",
+      "name": "extractor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify:37e7f45c-e00a-4b88-90e2-c97acf59510b",
+            "confirmation_timeout_in_minutes": 1,
+            "confirmation_was_authenticated": true,
+            "delivery_policy": "",
+            "endpoint": "arn:aws:lambda:us-east-1:692140489268:function:parmail-extractor",
+            "endpoint_auto_confirms": false,
+            "filter_policy": "",
+            "filter_policy_scope": "",
+            "id": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify:37e7f45c-e00a-4b88-90e2-c97acf59510b",
+            "owner_id": "692140489268",
+            "pending_confirmation": false,
+            "protocol": "lambda",
+            "raw_message_delivery": false,
+            "redrive_policy": "",
+            "replay_policy": "",
+            "subscription_role_arn": "",
+            "topic_arn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_ecr_repository.extractor",
+            "aws_iam_role.lambda_role",
+            "aws_lambda_function.extractor",
+            "aws_s3_bucket.parmail",
+            "aws_sns_topic.email_notify",
+            "data.aws_caller_identity.current",
+            "data.aws_ecr_authorization_token.token",
+            "docker_registry_image.extractor"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "docker_registry_image",
+      "name": "confirmer",
+      "provider": "provider[\"registry.terraform.io/kreuzwerker/docker\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "auth_config": [],
+            "build": [
+              {
+                "additional_contexts": [],
+                "auth_config": [],
+                "build_args": {},
+                "build_id": "",
+                "build_log_file": "",
+                "builder": "",
+                "cache_from": [],
+                "cache_to": [],
+                "cgroup_parent": "",
+                "context": "/Users/280001747@bwt3.com/dev/mine/parmail",
+                "cpu_period": 0,
+                "cpu_quota": 0,
+                "cpu_set_cpus": "",
+                "cpu_set_mems": "",
+                "cpu_shares": 0,
+                "dockerfile": "/Users/280001747@bwt3.com/dev/mine/parmail/Dockerfile",
+                "extra_hosts": [],
+                "force_remove": false,
+                "isolation": "",
+                "label": {},
+                "labels": {},
+                "memory": 0,
+                "memory_swap": 0,
+                "network_mode": "",
+                "no_cache": true,
+                "platform": "linux/arm64",
+                "pull_parent": false,
+                "remote_context": "",
+                "remove": true,
+                "secrets": [],
+                "security_opt": [],
+                "session_id": "",
+                "shm_size": 0,
+                "squash": false,
+                "suppress_output": false,
+                "tag": [],
+                "target": "confirmer",
+                "ulimit": [],
+                "version": ""
+              }
+            ],
+            "id": "sha256:8b9539a4e9771b61b520f268c825c1419607dfe8373774c3eb4cb099ee549f8b",
+            "insecure_skip_verify": false,
+            "keep_remotely": true,
+            "name": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/confirmer:latest",
+            "sha256_digest": "sha256:8b9539a4e9771b61b520f268c825c1419607dfe8373774c3eb4cb099ee549f8b",
+            "timeouts": null,
+            "triggers": {
+              "dir_sha1": "470fca04a9d20eeb6bbf1c8287cbccc32f94253c"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_ecr_repository.confirmer",
+            "data.aws_caller_identity.current",
+            "data.aws_ecr_authorization_token.token"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "docker_registry_image",
+      "name": "extractor",
+      "provider": "provider[\"registry.terraform.io/kreuzwerker/docker\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "auth_config": [],
+            "build": [
+              {
+                "additional_contexts": [],
+                "auth_config": [],
+                "build_args": {},
+                "build_id": "",
+                "build_log_file": "",
+                "builder": "",
+                "cache_from": [],
+                "cache_to": [],
+                "cgroup_parent": "",
+                "context": "/Users/280001747@bwt3.com/dev/mine/parmail",
+                "cpu_period": 0,
+                "cpu_quota": 0,
+                "cpu_set_cpus": "",
+                "cpu_set_mems": "",
+                "cpu_shares": 0,
+                "dockerfile": "/Users/280001747@bwt3.com/dev/mine/parmail/Dockerfile",
+                "extra_hosts": [],
+                "force_remove": false,
+                "isolation": "",
+                "label": {},
+                "labels": {},
+                "memory": 0,
+                "memory_swap": 0,
+                "network_mode": "",
+                "no_cache": true,
+                "platform": "linux/arm64",
+                "pull_parent": false,
+                "remote_context": "",
+                "remove": true,
+                "secrets": [],
+                "security_opt": [],
+                "session_id": "",
+                "shm_size": 0,
+                "squash": false,
+                "suppress_output": false,
+                "tag": [],
+                "target": "extractor",
+                "ulimit": [],
+                "version": ""
+              }
+            ],
+            "id": "sha256:66cb8091e2d0dab9029898de1ecd887939d925573fa9b0238f7ca6ec9cb7cc85",
+            "insecure_skip_verify": false,
+            "keep_remotely": true,
+            "name": "692140489268.dkr.ecr.us-east-1.amazonaws.com/parmail/extractor:latest",
+            "sha256_digest": "sha256:66cb8091e2d0dab9029898de1ecd887939d925573fa9b0238f7ca6ec9cb7cc85",
+            "timeouts": null,
+            "triggers": {
+              "dir_sha1": "470fca04a9d20eeb6bbf1c8287cbccc32f94253c"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_ecr_repository.extractor",
+            "data.aws_caller_identity.current",
+            "data.aws_ecr_authorization_token.token"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": [
+    {
+      "object_kind": "var",
+      "config_addr": "var.parent_domain",
+      "status": "pass",
+      "objects": [
+        {
+          "object_addr": "var.parent_domain",
+          "status": "pass"
+        }
+      ]
+    }
+  ]
+}

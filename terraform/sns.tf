@@ -21,10 +21,10 @@ resource "aws_sns_topic_policy" "allow_s3" {
   })
 }
 
-resource "aws_sns_topic_subscription" "interpreter" {
+resource "aws_sns_topic_subscription" "extractor" {
   topic_arn = aws_sns_topic.email_notify.arn
   protocol  = "lambda"
-  endpoint  = aws_lambda_function.interpreter.arn
+  endpoint  = aws_lambda_function.extractor.arn
 }
 
 resource "aws_sns_topic_subscription" "confirmer" {
@@ -33,10 +33,10 @@ resource "aws_sns_topic_subscription" "confirmer" {
   endpoint  = aws_lambda_function.confirmer.arn
 }
 
-resource "aws_lambda_permission" "sns_interpreter" {
+resource "aws_lambda_permission" "sns_extractor" {
   statement_id  = "AllowSNSInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.interpreter.function_name
+  function_name = aws_lambda_function.extractor.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.email_notify.arn
 }

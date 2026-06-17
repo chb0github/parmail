@@ -3,7 +3,7 @@
 resource "aws_ecr_repository" "confirmer" {
   name                 = "${var.project_name}/confirmer"
   image_tag_mutability = "MUTABLE"
-  force_delete         = var.force_delete_ecr
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true

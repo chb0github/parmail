@@ -7,27 +7,27 @@ locals {
   ]))
 }
 
-# --- Interpreter ---
+# --- Extractor ---
 
-resource "aws_ecr_repository" "interpreter" {
-  name                 = "${var.project_name}/interpreter"
+resource "aws_ecr_repository" "extractor" {
+  name                 = "${var.project_name}/extractor"
   image_tag_mutability = "MUTABLE"
-  force_delete         = var.force_delete_ecr
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
   }
 }
 
-resource "docker_registry_image" "interpreter" {
-  name          = "${aws_ecr_repository.interpreter.repository_url}:latest"
+resource "docker_registry_image" "extractor" {
+  name          = "${aws_ecr_repository.extractor.repository_url}:latest"
   keep_remotely = true
 
   build {
     context    = abspath("${path.module}/..")
     dockerfile = abspath("${path.module}/../Dockerfile")
     platform   = "linux/arm64"
-    target     = "interpreter"
+    target     = "extractor"
     no_cache   = true
   }
 
@@ -36,11 +36,11 @@ resource "docker_registry_image" "interpreter" {
   }
 }
 
-resource "aws_lambda_function" "interpreter" {
-  function_name = "${var.project_name}-interpreter"
+resource "aws_lambda_function" "extractor" {
+  function_name = "${var.project_name}-extractor"
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.interpreter.repository_url}@${docker_registry_image.interpreter.sha256_digest}"
+  image_uri     = "${aws_ecr_repository.extractor.repository_url}@${docker_registry_image.extractor.sha256_digest}"
   timeout       = 300
   memory_size   = 512
   architectures = ["arm64"]
@@ -56,14 +56,14 @@ resource "aws_lambda_function" "interpreter" {
     }
   }
 
-  depends_on = [docker_registry_image.interpreter]
+  depends_on = [docker_registry_image.extractor]
 }
 
 
-output "ecr_interpreter_url" {
-  value = aws_ecr_repository.interpreter.repository_url
+output "ecr_extractor_url" {
+  value = aws_ecr_repository.extractor.repository_url
 }
 
-output "interpreter_function_name" {
-  value = aws_lambda_function.interpreter.function_name
+output "extractor_function_name" {
+  value = aws_lambda_function.extractor.function_name
 }

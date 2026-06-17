@@ -15,6 +15,16 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
+
+  default_tags {
+    tags = {
+      StackId = var.stack_id
+    }
+  }
+}
+
+resource "terraform_data" "stack_id" {
+  input = var.stack_id
 }
 
 data "aws_caller_identity" "current" {}
