@@ -6,7 +6,7 @@ use futures::stream::{self, StreamExt};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use parmail::extractor::analysis::ModelConfig;
-use parmail::extractor::lambda;
+use parmail::extractor::extractor;
 use parmail::extractor::output::{Output, Verbosity};
 use parmail::extractor::processor;
 use parmail::extractor::storage::Storage;
@@ -149,7 +149,7 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Commands::Lambda => {
-            lambda::run_lambda().await?;
+            extractor::run_lambda().await?;
         }
         Commands::Validate => {
             let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;

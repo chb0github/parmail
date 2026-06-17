@@ -1,5 +1,5 @@
 pub mod analysis;
-pub mod lambda;
+pub mod extractor;
 pub mod output;
 pub mod processor;
 pub mod storage;

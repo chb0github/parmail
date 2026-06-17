@@ -9,8 +9,8 @@ use crate::extractor::processor::process_raw_email;
 use crate::extractor::storage::Storage;
 use crate::input;
 use crate::models::S3Event;
+use crate::ses::EmailError;
 
-type LambdaError = Box<dyn std::error::Error + Send + Sync>;
 
 pub async fn run_lambda() -> Result<()> {
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
@@ -49,7 +49,7 @@ async fn handle_sns_event(
     model: &ModelConfig,
     storage: &Storage,
     event: LambdaEvent<SnsEvent>,
-) -> std::result::Result<serde_json::Value, LambdaError> {
+) -> std::result::Result<serde_json::Value, EmailError> {
     let (sns_event, _context) = event.into_parts();
 
     for sns_record in &sns_event.records {

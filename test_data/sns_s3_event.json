@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "EventSource": "aws:sns",
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify:example",
+      "Sns": {
+        "Type": "Notification",
+        "MessageId": "example-message-id",
+        "TopicArn": "arn:aws:sns:us-east-1:692140489268:parmail-email-notify",
+        "Subject": "Amazon S3 Notification",
+        "Message": "{\"Records\":[{\"eventVersion\":\"2.1\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-east-1\",\"eventTime\":\"2026-06-04T19:17:14.000Z\",\"eventName\":\"ObjectCreated:Put\",\"s3\":{\"bucket\":{\"name\":\"parmail-692140489268\",\"arn\":\"arn:aws:s3:::parmail-692140489268\"},\"object\":{\"key\":\"emails/hmbkiiso30pa3lvcrgma9m4rss3a9fr51uoi6781\",\"size\":5678}}}]}",
+        "Timestamp": "2026-06-04T19:17:15.000Z",
+        "SignatureVersion": "1",
+        "Signature": "EXAMPLE",
+        "SigningCertUrl": "https://sns.us-east-1.amazonaws.com/example.pem",
+        "UnsubscribeUrl": "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe",
+        "MessageAttributes": {}
+      }
+    }
+  ]
+}
