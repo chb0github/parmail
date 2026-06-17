@@ -3,6 +3,7 @@
 resource "aws_ecr_repository" "confirmer" {
   name                 = "${var.project_name}/confirmer"
   image_tag_mutability = "MUTABLE"
+  force_delete         = var.force_delete_ecr
 
   image_scanning_configuration {
     scan_on_push = true
@@ -48,13 +49,6 @@ resource "aws_lambda_function" "confirmer" {
   depends_on = [docker_registry_image.confirmer]
 }
 
-resource "aws_lambda_permission" "allow_s3_confirmer" {
-  statement_id  = "AllowS3Invoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.confirmer.function_name
-  principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.parmail.arn
-}
 
 output "ecr_confirmer_url" {
   value = aws_ecr_repository.confirmer.repository_url

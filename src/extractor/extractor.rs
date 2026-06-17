@@ -3,6 +3,7 @@ use aws_sdk_bedrockruntime::Client as BedrockClient;
 use aws_sdk_s3::Client as S3Client;
 use lambda_runtime::{service_fn, LambdaEvent};
 
+use aws_lambda_events::event::sns::SnsEvent;
 use crate::extractor::analysis::ModelConfig;
 use crate::extractor::processor::process_raw_email;
 use crate::extractor::storage::Storage;
@@ -27,13 +28,13 @@ pub async fn run_lambda() -> Result<()> {
         Err(_) => ModelConfig::default_config(&storage_dir),
     };
 
-    let handler = service_fn(move |event: LambdaEvent<S3Event>| {
+    let handler = service_fn(move |event: LambdaEvent<SnsEvent>| {
         let s3 = s3_client.clone();
         let bedrock = bedrock_client.clone();
         let model = model_config.clone();
         let store = Storage::from_uri(&storage_dir, Some(s3.clone()))
             .expect("Invalid STORAGE_DIR");
-        async move { handle_s3_event(&s3, &bedrock, &model, &store, event).await }
+        async move { handle_sns_event(&s3, &bedrock, &model, &store, event).await }
     });
 
     lambda_runtime::run(handler)
@@ -42,40 +43,44 @@ pub async fn run_lambda() -> Result<()> {
     Ok(())
 }
 
-async fn handle_s3_event(
-    s3_client: &S3Client,
+async fn handle_sns_event(
+    _s3_client: &S3Client,
     bedrock_client: &BedrockClient,
     model: &ModelConfig,
     storage: &Storage,
-    event: LambdaEvent<S3Event>,
+    event: LambdaEvent<SnsEvent>,
 ) -> std::result::Result<serde_json::Value, LambdaError> {
-    let (s3_event, _context) = event.into_parts();
+    let (sns_event, _context) = event.into_parts();
 
-    for record in &s3_event.records {
-        let bucket = record.s3.bucket.name.clone();
-        let key = record.s3.object.key.clone();
-        let source = input::EmailSource::S3 { bucket: bucket.clone(), key: key.clone() };
+    for sns_record in &sns_event.records {
+        let s3_event: S3Event = serde_json::from_str(&sns_record.sns.message)?;
 
-        let raw_email = match input::fetch_email(&source).await {
-            Ok(data) => data,
-            Err(e) => {
-                tracing::error!(error = %e, bucket, key, "Failed to fetch email");
-                return Err(e.to_string().into());
-            }
-        };
+        for record in &s3_event.records {
+            let bucket = record.s3.bucket.name.clone();
+            let key = record.s3.object.key.clone();
+            let source = input::EmailSource::S3 { bucket: bucket.clone(), key: key.clone() };
 
-        match process_raw_email(bedrock_client, model, storage, &key, &raw_email).await {
-            Ok(manifest) => {
-                tracing::info!(
-                    count = manifest.mail_pieces.len(),
-                    bucket,
-                    key,
-                    "Successfully processed email"
-                );
-            }
-            Err(e) => {
-                tracing::error!(error = %e, bucket, key, "Failed to process email");
-                return Err(e.to_string().into());
+            let raw_email = match input::fetch_email(&source).await {
+                Ok(data) => data,
+                Err(e) => {
+                    tracing::error!(error = %e, bucket, key, "Failed to fetch email");
+                    return Err(e.to_string().into());
+                }
+            };
+
+            match process_raw_email(bedrock_client, model, storage, &key, &raw_email).await {
+                Ok(manifest) => {
+                    tracing::info!(
+                        count = manifest.mail_pieces.len(),
+                        bucket,
+                        key,
+                        "Successfully processed email"
+                    );
+                }
+                Err(e) => {
+                    tracing::error!(error = %e, bucket, key, "Failed to process email");
+                    return Err(e.to_string().into());
+                }
             }
         }
     }

@@ -12,6 +12,7 @@ locals {
 resource "aws_ecr_repository" "interpreter" {
   name                 = "${var.project_name}/interpreter"
   image_tag_mutability = "MUTABLE"
+  force_delete         = var.force_delete_ecr
 
   image_scanning_configuration {
     scan_on_push = true
@@ -58,13 +59,6 @@ resource "aws_lambda_function" "interpreter" {
   depends_on = [docker_registry_image.interpreter]
 }
 
-resource "aws_lambda_permission" "allow_s3_interpreter" {
-  statement_id  = "AllowS3Invoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.interpreter.function_name
-  principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.parmail.arn
-}
 
 output "ecr_interpreter_url" {
   value = aws_ecr_repository.interpreter.repository_url

@@ -27,3 +27,15 @@ variable "email_user" {
   default     = "usps"
 }
 
+variable "force_destroy_bucket" {
+  description = "Allow terraform destroy to delete the S3 bucket even if it contains objects"
+  type        = bool
+  default     = false
+}
+
+variable "force_delete_ecr" {
+  description = "Allow terraform destroy to delete ECR repositories even if they contain images"
+  type        = bool
+  default     = false
+}
+
