@@ -1,0 +1,115 @@
+Return-Path: <forwarding-noreply@google.com>
+Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
+ by inbound-smtp.us-east-1.amazonaws.com with SMTP id daueueo0li05q8m6alln8kega2oh6jv5sic0kd01
+ for usps@parmail.thetaone.io;
+ Wed, 17 Jun 2026 02:20:14 +0000 (UTC)
+X-SES-Spam-Verdict: PASS
+X-SES-Virus-Verdict: PASS
+Received-SPF: pass (spfCheck: domain of google.com designates 209.85.167.43 as permitted sender) client-ip=209.85.167.43; envelope-from=forwarding-noreply@google.com; helo=mail-lf1-f43.google.com;
+Authentication-Results: amazonses.com;
+ spf=pass (spfCheck: domain of google.com designates 209.85.167.43 as permitted sender) client-ip=209.85.167.43; envelope-from=forwarding-noreply@google.com; helo=mail-lf1-f43.google.com;
+ dkim=pass header.i=@google.com;
+ dmarc=pass header.from=google.com;
+X-SES-RECEIPT: AEFBQUFBQUFBQUFGNjBiRk1UMWZtRUFiYm8rYytMTnVIcWRvK1NBN0l3c1lQNU93aWY1OHpYQVJxK0w1TWQ2anFiMjUvZ2VBTDhUNkN3SlVsUk4zakpaelRhbEVlcXN6WnNiQ2Y1ckJld3BmcXkxU3ZEN1N2OGE4YzkyNHQxaVhLNWhseDE3eEJET01aUmduQW5hRVhmNjZOL2FnTWMvT1NrM1BxWGROOVNUV2hDWXhhclNVbk4zTXpEUncwNDRDZ0o1N3hzeGxMMUJ1MEpZbnhOZHFBVmNWSjhpNkI2N1Y5aThLVGNCZ3dwdEFWU0t3ZVA1TzVTUGk3UUJHdndPY09kTkFRdHJzL3g3dlRUbGFWRGprbVVQQkpPRE05dmFWUUd2SXp3V1I3MDhkdDVMMEZhSUY1RGc9PQ==
+X-SES-DKIM-SIGNATURE: a=rsa-sha256; q=dns/txt; b=EQhgu7oGCOWgvQ3LAfjdkSesizkF6k3+2nDwe4gbw8GfJphgTSZaqMyXPF6L8U/e9C7QSgLaIZijkD5zxdsUQmNC0i9lHbTq+5bAgkVQDNciW+kalBh4b+uvi3Ggjaj0f99FJmR92JtEQwAKJ/FBj+tlUF6lwjnXpLKik2Y8654=; c=relaxed/simple; s=224i4yxa5dv7c2xz3womw6peuasteono; d=amazonses.com; t=1781662815; v=1; bh=yNwE7vmbhHbljgo3EqJY52FmWiq51bmjkVmhwpZfLo8=; h=From:To:Cc:Bcc:Subject:Date:Message-ID:MIME-Version:Content-Type:X-SES-RECEIPT;
+Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-5aa7bf3d512so6617747e87.2
+        for <usps@parmail.thetaone.io>; Tue, 16 Jun 2026 19:20:14 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1781662813; cv=none;
+        d=google.com; s=arc-20240605;
+        b=NSyAmgAZfjvHPjlIS8X0LvTQMCZScscUmnUs5K6on+aXl09z8X3rqrObgYbXg5nDpT
+         j4kfmLZVW8BryFWUrwChS/4H9bGhAf1Z+UyDrBPUmvLewAa8nISnogYDMcJHEPwm5uGS
+         r3E1nkzzD652Rc0eNaalMWJBuYWy7kPsszlumT3C2M5pcfPnHT6S+XU0Fp07uT7aqDab
+         DGU/XixwLaacQ03wb2zrugV9pM7JF14N0g2NNkthJihswnAhIECcC9EfQ9aPa/Wek8/G
+         YPEYT45eti/IHv3aJ3uF1zwWlaOT5X5oIblOkGjwMyho+5ajJJtcUuEW+WXBMr4GFdQi
+         ovVw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:from:subject:message-id:date:mime-version:dkim-signature;
+        bh=yNwE7vmbhHbljgo3EqJY52FmWiq51bmjkVmhwpZfLo8=;
+        fh=iwvrgDWpBHgOdeGgtiYEhwMZ6Ywxa1DqjX6TElOQCl0=;
+        b=AnrV4iMuDkm6NXyBuMWXZuR/5RX5JySDGMBvN/EwLtDh/r5COUlANdJwyXC+T6rr/Q
+         9H5DQ4jZ90SRALAgFG2HpwvbL9C/uxoNb/PH3tXXscLPvDRG3VcEvsg9IBnSxWZ+Ukyu
+         lm5rbrFrNbhlbpRFhIkdeRbO8j0qCiu2n/Nllt21VcHt+L3ZNNqY9bdLbPAJv63X8IqE
+         lUN/SKeHmfoDu460r0XZrEqMAD8oeZpPf4FpZp3LtbDujWRU7PElg0+zjlE0wBFMtFhO
+         dZ+nCNc2dXLaArzZFnvcveQ44c1rAqBQt2OfZgOEQcExXncx/d96D3avrIatJ2ycbWwu
+         S3UA==;
+        darn=parmail.thetaone.io
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20251104; t=1781662813; x=1782267613; darn=parmail.thetaone.io;
+        h=to:from:subject:message-id:date:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=yNwE7vmbhHbljgo3EqJY52FmWiq51bmjkVmhwpZfLo8=;
+        b=OMnPf3jKXsCYpDthJWBT5aCQoesSG3jC6JJb5lISP8fN5O5sPbiKlkVRZiKMcE2jAR
+         fuyNCjpD5BE+Yro81Bx4ylB4uFh7kuOuCtDxDAxG3LAZfCWcC4KNtzR5Ek/E/H3UZK7F
+         fZRHpBCbVP11G+2CsO+R3pl8uBuxKzUhpdRLougN+AnaoyDfvrd8SMjTXgKhRHypq4+n
+         4WCf6qgJXOw02pmeRB9rXvitM2KbwQpJrvYNvYSGay9ngImetl8+nSDqBO6rzsDnXghC
+         yFE6X5P8FGyZohEUrnNwB4YAYaflubFmCbh/Sc7ZN9UA339b/z6EhPojepilYRuI3TP8
+         Rw1g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1781662813; x=1782267613;
+        h=to:from:subject:message-id:date:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=yNwE7vmbhHbljgo3EqJY52FmWiq51bmjkVmhwpZfLo8=;
+        b=OvCo+tVajfq2rHzmcX5TPvnhj/i5+/jOScNpo/bcix2m+FjEgWW9n3zSnAyJty2kqI
+         zg1rMBVZL9RGslmzAET50dhPPYYyORv9YoiLLvRBIfmK4JU1HHVqpztujiqzh1sWR9yw
+         /5sVIojK/X9p4QAUDMTWVHXvggcUNQCGtdkt0VlYFedJgqNv2n11E6ffAaQD2gn+TGcb
+         Lq67OrJ551JGDuXohZAQhOCF0UAuaECPqoFrx6GkxVv+GTGo59ZvcxAm1n8nGkzCI0WQ
+         MjobVZbo+Fq7HgQDCucH96HY+0IlXt2IXVoeJWaiwNbjon4TL3cN9MSvj404R3wAPqjB
+         +omg==
+X-Gm-Message-State: AOJu0YyQqja8u8eX6Do0cpba1ajBjeqNFXR8CqHIjuZ/mHRO0uS6BpRM
+	eEqzEjdblxQj34rZ7Qm+o9qfB6spf/lGk+T2XBf+vRQAXhssYe9UVZ0WJub2NLEWULUKL8M0LFE
+	0b0mG5YuyH+jvLHJVVG2B96IeBTisjKZO1qAz+ob6osK2uH99PSQUZiv10oHwq2RU
+X-Gm-Gg: Acq92OFu8CSts8De4EiVRPOfaFIj6lA1lffj7wwLPlV2aZ1T8PPKn22M4ace+s/RkK5
+	i+5FlF2Xt8xtWMOOEX8LrxG324D5f5T1NFqqat/Jw0S8fjfO3dIQAGmXQktQVI6qFUfgw0zMxqL
+	muo3SujSiHpt2xZB4RCy23ujgQPZPb17g7N6/cC2b7aqf4Vk+QNnhQdoFeZe7slZb5MVGxQ3j2m
+	qYy/BA0+nz5zSbx+1Su3dPe1scGATvDz5ogmkpgBe5Y0Nf6WttMuZtbH6VhEzq/WmSXQx1GIKpG
+	HSZg4J7yKCUTAVfKC/96Ws9ze3j4FeevQd1whcgVOTw8H5nN1T2R0P6vMYezevWlWYV5MZBM4O4
+	XJq19eE3LgNKBuPT6c2+dUYtFQqs1N7i2xNUDA3ro/huSFvJ7lubQIA==
+MIME-Version: 1.0
+X-Received: by 2002:a05:6512:3b11:b0:5aa:126b:4504 with SMTP id
+ 2adb3069b0e04-5ad46fc187emr461909e87.23.1781662812544; Tue, 16 Jun 2026
+ 19:20:12 -0700 (PDT)
+X-Google-Address-Confirmation: xBlGFvjfDCaBe15tZJvEdC3yf1M
+Date: Tue, 16 Jun 2026 19:20:12 -0700
+X-Gm-Features: AVVi8CfH_qOMYcp1CEBtpe-TEEcbo3sejILPaMXiRtEKgUSPlEeXzBlowr1haMc
+Message-ID: <CANdjUb7CVHx1FR4qpLN0HXhqGggNBFwj+RQasJtC1i13mGMyfw@mail.gmail.com>
+Subject: (Gmail Forwarding Confirmation - Receive Mail from christian.bongiorno@gmail.com
+From: Gmail Team <forwarding-noreply@google.com>
+To: usps@parmail.thetaone.io
+Content-Type: text/plain; charset="UTF-8"
+
+christian.bongiorno@gmail.com has requested to automatically forward
+mail to your email
+address usps@parmail.thetaone.io.
+
+To allow christian.bongiorno@gmail.com to automatically forward mail
+to your address,
+please click the link below to confirm the request:
+
+https://mail.google.com/mail/vf-%5BANGjdJ9MJMtM0dJbNPibf-dT72ggcLcZeO1Gc4lauA8Gb_-DdnV7Sy0FwUSL_RWXZ5wWDY8fFGFwsk0w_BR5iEAFFeIv6haL6LCWcA5rLg%5D-FTX92w_GyskkfNOfQu2GZyITw5o
+
+If you click the link and it appears to be broken, please copy and paste it
+into a new browser window.
+
+Thanks for using Gmail!
+
+Sincerely,
+
+The Gmail Team
+
+If you do not approve of this request, no further action is required.
+christian.bongiorno@gmail.com cannot automatically forward messages to
+your email address
+unless you confirm the request by clicking the link above. If you accidentally
+clicked the link, but you do not want to allow christian.bongiorno@gmail.com to
+automatically forward messages to your address, click this link to cancel this
+verification:
+https://mail.google.com/mail/uf-%5BANGjdJ_vEPeuY6MGCZ_SDyEY7wNDwXnXNLsmf4kAUW4oZgBGUs3q0pe3520zYuTLvHfsX1PoqZ7zUPdayY0Fz_GAgjSK4MK6-oa_SMGR_A%5D-FTX92w_GyskkfNOfQu2GZyITw5o
+
+To learn more about why you might have received this message, please
+visit: http://support.google.com/mail/bin/answer.py?answer=184973.
+
+Please do not respond to this message. If you'd like to contact the
+Google.com Team, please log in to your account and click 'Help' at
+the top of any page. Then, click 'Contact Us' along the bottom of the
+Help Center.

@@ -9,13 +9,13 @@ COPY src/ src/
 
 RUN cargo build --release --target aarch64-unknown-linux-musl
 
-# Image 1: parmail/interpreter
-FROM scratch AS interpreter
+# Image 1: parmail/extractor
+FROM scratch AS extractor
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /app/target/aarch64-unknown-linux-musl/release/parmail-interpreter /interpreter
+COPY --from=builder /app/target/aarch64-unknown-linux-musl/release/parmail-extractor /extractor
 
-ENTRYPOINT ["/interpreter"]
+ENTRYPOINT ["/extractor"]
 CMD ["lambda"]
 
 # Image 2: parmail/confirmer

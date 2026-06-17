@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
-name = "parmail-interpreter"
+name = "parmail-extractor"
 path = "src/bin/interpreter.rs"
 
 [[bin]]
@@ -31,7 +31,6 @@ mail-parser = "0.9"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
-phf = { version = "0.11", features = ["macros"] }
 regex = "1"
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"

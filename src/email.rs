@@ -109,11 +109,11 @@ fn extract_from(message: &mail_parser::Message) -> (String, String) {
 }
 
 fn extract_body(message: &mail_parser::Message) -> Option<String> {
-    message
-        .text_body
-        .iter()
-        .map(|part| part.to_string())
-        .reduce(|a, b| a + b.as_str())
+    let body: String = (0..message.text_body.len())
+        .filter_map(|i| message.body_text(i))
+        .collect::<Vec<_>>()
+        .join("");
+    if body.is_empty() { None } else { Some(body) }
 }
 
 fn extract_images(message: &mail_parser::Message) -> Vec<ExtractedImage> {
