@@ -15,6 +15,8 @@ use parmail::models::S3Event;
 type LambdaError = Box<dyn std::error::Error + Send + Sync>;
 
 const SUBJECT_PREFIX: &str = "Parmail Forwarding Confirmation - Action Required";
+const UNKNOWN_SUBJECT: &str = "Parmail - Unrecognized Forwarding Address";
+const UNKNOWN_TEMPLATE: &str = include_str!("templates/unknown_forwarder.txt");
 
 /// USPS sender domains — gatekeeper already validated these, pass through without confirmation.
 const USPS_DOMAINS: &[&str] = &[
@@ -101,7 +103,7 @@ async fn handle_sqs_event(
 
     let emails = fetch_emails(&sqs_event).await;
     let sent = send_confirmations(&ses, &emails).await;
-    let forwarded = forward_to_extractor(sqs, &emails).await;
+    let forwarded = forward_to_extractor(&ses, sqs, &emails).await;
 
     Ok(serde_json::json!({"status": "ok", "sent": sent, "forwarded": forwarded}))
 }
@@ -161,32 +163,54 @@ async fn send_confirmations(ses: &SeS, emails: &[(String, parmail::email::Email)
     .await
 }
 
-/// Forward confirmed non-confirmation emails to the extractor queue. Delete unconfirmed.
-async fn forward_to_extractor(sqs: &SqS, emails: &[(String, parmail::email::Email)]) -> u64 {
+/// Forward confirmed non-confirmation emails to the extractor queue.
+/// Unknown forwarders get a one-time notification, then all their emails are silently dropped.
+async fn forward_to_extractor(ses: &SeS, sqs: &SqS, emails: &[(String, parmail::email::Email)]) -> u64 {
     stream::iter(
         emails.iter()
             .filter(|(_, parsed)| !provider::is_forwarding_request(parsed))
     )
     .then(|(body, parsed)| {
         let sqs = &*sqs;
+        let ses = &*ses;
         async move {
             // USPS senders pass through — gatekeeper already validated them
-            if !is_usps_sender(parsed) {
-                let forwarder = get_forwarder(parsed);
-                let confirmed_key = format!("state/confirmed/{}", forwarder);
-                if !check_s3_exists(&confirmed_key).await {
-                    tracing::info!(forwarder, "Unconfirmed forwarder — dropping");
-                    return 0u64;
-                }
+            if is_usps_sender(parsed) {
+                return forward_or_zero(sqs, body).await;
             }
-            match sqs.forward(body).await {
-                Ok(_) => { 1u64 }
-                Err(e) => { tracing::error!(error = %e, "Failed to forward to extractor queue"); 0 }
+            let forwarder = get_forwarder(parsed);
+            if check_s3_exists(&format!("state/confirmed/{}", forwarder)).await {
+                return forward_or_zero(sqs, body).await;
             }
+            // Not confirmed — notify once, then drop
+            notify_unknown_forwarder(ses, forwarder).await;
+            0u64
         }
     })
     .fold(0u64, |count, n| async move { count + n })
     .await
+}
+
+async fn forward_or_zero(sqs: &SqS, body: &str) -> u64 {
+    match sqs.forward(body).await {
+        Ok(_) => 1u64,
+        Err(e) => { tracing::error!(error = %e, "Failed to forward to extractor queue"); 0 }
+    }
+}
+
+/// Send a one-time notification to an unknown forwarder, then mark them as notified.
+async fn notify_unknown_forwarder(ses: &SeS, forwarder: &str) {
+    let notified_key = format!("state/notified/{}", forwarder);
+    if check_s3_exists(&notified_key).await {
+        tracing::info!(forwarder, "Already notified — silently dropping");
+        return;
+    }
+    let body = UNKNOWN_TEMPLATE.replace("{forwarder}", forwarder);
+    match ses.send_email(forwarder, UNKNOWN_SUBJECT, &body).await {
+        Ok(_) => tracing::info!(forwarder, "Sent unknown-forwarder notification"),
+        Err(e) => { tracing::error!(error = %e, forwarder, "Failed to send notification"); return; }
+    }
+    mark_s3_state(&notified_key).await;
 }
 
 /// Identify the forwarding party from email headers.
@@ -240,13 +264,31 @@ fn list_confirmed(state_dir: &str) -> Result<()> {
     Ok(())
 }
 
+fn bucket_name() -> String {
+    std::env::var("BUCKET_NAME").expect("BUCKET_NAME must be set")
+}
+
 async fn check_s3_exists(key: &str) -> bool {
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let s3 = aws_sdk_s3::Client::new(&config);
     s3.head_object()
-        .bucket("parmail-692140489268")
+        .bucket(bucket_name())
         .key(key)
         .send()
         .await
         .is_ok()
+}
+
+async fn mark_s3_state(key: &str) {
+    let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+    let s3 = aws_sdk_s3::Client::new(&config);
+    if let Err(e) = s3.put_object()
+        .bucket(bucket_name())
+        .key(key)
+        .body(aws_sdk_s3::primitives::ByteStream::from_static(b""))
+        .send()
+        .await
+    {
+        tracing::error!(error = %e, key, "Failed to write state key");
+    }
 }
