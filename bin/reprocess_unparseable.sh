@@ -7,7 +7,7 @@ STORAGE_DIR="results/claude-haiku-4-5-20251001-v1"
 # Find all emails with unparseable errors
 echo "Finding emails with parsing errors..."
 find results/*/*/manifest.json -exec grep -l "No parseable response from model" {} \; 2>/dev/null | while read manifest; do
-  hash=$(basename $(dirname "$manifest"))
+  hash=$(basename "$(dirname "$manifest")")
   msg_id=$(jq -r '.email_message_id' "$manifest" 2>/dev/null)
 
   # Find the .eml file

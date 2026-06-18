@@ -1,0 +1,19 @@
+{
+  "Records": [
+    {
+      "messageId": "example-message-id",
+      "receiptHandle": "example-receipt-handle",
+      "body": "{\"Records\":[{\"eventVersion\":\"2.1\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-east-1\",\"eventTime\":\"2026-06-17T19:17:14.000Z\",\"eventName\":\"ObjectCreated:Put\",\"s3\":{\"bucket\":{\"name\":\"parmail-692140489268\",\"arn\":\"arn:aws:s3:::parmail-692140489268\"},\"object\":{\"key\":\"emails/hmbkiiso30pa3lvcrgma9m4rss3a9fr51uoi6781\",\"size\":5678}}}]}",
+      "md5OfBody": "example-md5",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-1:692140489268:parmail-inbound",
+      "awsRegion": "us-east-1",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1718650634000",
+        "SenderId": "EXAMPLE",
+        "ApproximateFirstReceiveTimestamp": "1718650634001"
+      }
+    }
+  ]
+}

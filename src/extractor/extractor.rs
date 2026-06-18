@@ -3,7 +3,7 @@ use aws_sdk_bedrockruntime::Client as BedrockClient;
 use aws_sdk_s3::Client as S3Client;
 use lambda_runtime::{service_fn, LambdaEvent};
 
-use aws_lambda_events::event::sns::SnsEvent;
+use aws_lambda_events::event::sqs::SqsEvent;
 use crate::extractor::analysis::ModelConfig;
 use crate::extractor::processor::process_raw_email;
 use crate::extractor::storage::Storage;
@@ -28,13 +28,13 @@ pub async fn run_lambda() -> Result<()> {
         Err(_) => ModelConfig::default_config(&storage_dir),
     };
 
-    let handler = service_fn(move |event: LambdaEvent<SnsEvent>| {
+    let handler = service_fn(move |event: LambdaEvent<SqsEvent>| {
         let s3 = s3_client.clone();
         let bedrock = bedrock_client.clone();
         let model = model_config.clone();
         let store = Storage::from_uri(&storage_dir, Some(s3.clone()))
             .expect("Invalid STORAGE_DIR");
-        async move { handle_sns_event(&s3, &bedrock, &model, &store, event).await }
+        async move { handle_sqs_event(&s3, &bedrock, &model, &store, event).await }
     });
 
     lambda_runtime::run(handler)
@@ -43,17 +43,22 @@ pub async fn run_lambda() -> Result<()> {
     Ok(())
 }
 
-async fn handle_sns_event(
+async fn handle_sqs_event(
     _s3_client: &S3Client,
     bedrock_client: &BedrockClient,
     model: &ModelConfig,
     storage: &Storage,
-    event: LambdaEvent<SnsEvent>,
+    event: LambdaEvent<SqsEvent>,
 ) -> std::result::Result<serde_json::Value, EmailError> {
-    let (sns_event, _context) = event.into_parts();
+    let (sqs_event, _context) = event.into_parts();
 
-    for sns_record in &sns_event.records {
-        let s3_event: S3Event = serde_json::from_str(&sns_record.sns.message)?;
+    for message in &sqs_event.records {
+        let body = match &message.body {
+            Some(b) => b,
+            None => continue,
+        };
+
+        let s3_event: S3Event = serde_json::from_str(body)?;
 
         for record in &s3_event.records {
             let bucket = record.s3.bucket.name.clone();

@@ -161,6 +161,7 @@ mod tests {
                 subject: "Your Daily Digest for Mon, Jun 16".to_string(),
                 from: "USPS Informed Delivery".to_string(),
                 from_address: "christian.bongiorno@gmail.com".to_string(),
+                resent_from: None,
                 date: "2026-06-16T19:00:00Z".to_string(),
                 message_id: "test@example.com".to_string(),
             },

@@ -3,10 +3,11 @@ use clap::Parser;
 use futures::stream::{self, StreamExt};
 use lambda_runtime::{service_fn, LambdaEvent};
 use parmail::ses::SeS;
+use parmail::sqs::SqS;
 
 mod provider;
 
-use aws_lambda_events::event::sns::SnsEvent;
+use aws_lambda_events::event::sqs::SqsEvent;
 use parmail::email::parse_email;
 use parmail::input::{fetch_email, EmailSource};
 use parmail::models::S3Event;
@@ -14,6 +15,19 @@ use parmail::models::S3Event;
 type LambdaError = Box<dyn std::error::Error + Send + Sync>;
 
 const SUBJECT_PREFIX: &str = "Parmail Forwarding Confirmation - Action Required";
+
+/// USPS sender domains — gatekeeper already validated these, pass through without confirmation.
+const USPS_DOMAINS: &[&str] = &[
+    "usps.com",
+    "usps.gov",
+    "informeddelivery.usps.com",
+    "email.informeddelivery.usps.com",
+];
+
+fn is_usps_sender(parsed: &parmail::email::Email) -> bool {
+    USPS_DOMAINS.iter().any(|d| parsed.info.from_address.to_lowercase().ends_with(d))
+}
+
 
 #[derive(Parser)]
 #[command(name = "parmail-confirmer", about = "Forwarding confirmation Lambda")]
@@ -24,6 +38,23 @@ enum Cli {
     Process {
         /// Path to a raw email file
         path: String,
+        /// Directory containing state/confirmed/{email} files (default: results)
+        #[arg(long, default_value = "results")]
+        state_dir: String,
+    },
+    /// Mark a forwarder as confirmed locally
+    Confirm {
+        /// Email address to confirm
+        email: String,
+        /// Directory containing state/confirmed/{email} files (default: results)
+        #[arg(long, default_value = "results")]
+        state_dir: String,
+    },
+    /// List confirmed forwarders
+    List {
+        /// Directory containing state/confirmed/{email} files (default: results)
+        #[arg(long, default_value = "results")]
+        state_dir: String,
     },
 }
 
@@ -40,98 +71,182 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli {
         Cli::Lambda => run_lambda().await,
-        Cli::Process { path } => run_local(&path).await,
+        Cli::Process { path, state_dir } => run_local(&path, &state_dir),
+        Cli::Confirm { email, state_dir } => confirm_local(&email, &state_dir),
+        Cli::List { state_dir } => list_confirmed(&state_dir),
     }
 }
 
 async fn run_lambda() -> Result<()> {
+    let extractor_queue_url = std::env::var("EXTRACTOR_QUEUE_URL")
+        .expect("EXTRACTOR_QUEUE_URL must be set");
+    let sqs = SqS::new(&extractor_queue_url).await;
 
 
-    let handler = service_fn(move |event: LambdaEvent<SnsEvent>| {
-        async move { handle_sns_event(event).await }
-    });
-
-    lambda_runtime::run(handler)
-        .await
-        .map_err(|e| anyhow::anyhow!("{e}"))?;
+    lambda_runtime::run(service_fn(move |event: LambdaEvent<SqsEvent>| {
+        let sqs = sqs.clone();
+        async move { handle_sqs_event(&sqs, event).await }
+    }))
+    .await
+    .map_err(|e| anyhow::anyhow!("{e}"))?;
     Ok(())
 }
 
-async fn handle_sns_event(
-    event: LambdaEvent<SnsEvent>,
+async fn handle_sqs_event(
+    sqs: &SqS,
+    event: LambdaEvent<SqsEvent>,
 ) -> std::result::Result<serde_json::Value, LambdaError> {
     let ses = SeS::new().await;
-    let (sns_event, _context) = event.into_parts();
+    let (sqs_event, _context) = event.into_parts();
 
-    let sent = stream::iter(
-        sns_event.records.iter()
-            .filter_map(|sns_record| serde_json::from_str::<S3Event>(&sns_record.sns.message).ok())
-            .flat_map(|s3_event| s3_event.records)
-    )
-    .then(|record| async move {
-        let bucket = &record.s3.bucket.name;
-        let key = &record.s3.object.key;
-        let source = EmailSource::S3 { bucket: bucket.clone(), key: key.clone() };
-        let raw = fetch_email(&source).await
-            .map_err(|e| tracing::warn!(error = %e, bucket, key, "Failed to fetch email"))
-            .ok()?;
-        parse_email(&raw)
-            .map_err(|e| tracing::warn!(error = %e, bucket, key, "Failed to parse email"))
-            .ok()
-    })
-    .filter_map(|opt| async { opt })
-    .filter(|parsed| std::future::ready(provider::is_forwarding_request(parsed)))
-    .filter_map(|parsed| async move {
-        let (name, fwd_provider) = provider::get_forwarding_provider(&parsed)?;
-        let confirmation = (fwd_provider.extract)(&parsed)?;
-        tracing::info!(provider = name, originator = confirmation.originator.as_str(), "Detected forwarding confirmation");
-        let body = fwd_provider.render(name, &confirmation);
-        Some((name, confirmation.originator, body))
-    })
-    .then(|(name, originator, body)| {
-        let ses = &ses;
-        async move {
-            let result = ses.send_email(&originator, SUBJECT_PREFIX, &body).await;
-            tracing::info!(provider = name, originator = originator.as_str(), "Confirmation email sent");
-            result
-        }
-    })
-    .fold(0u64, |count, _| async move { count + 1 })
-    .await;
+    let emails = fetch_emails(&sqs_event).await;
+    let sent = send_confirmations(&ses, &emails).await;
+    let forwarded = forward_to_extractor(sqs, &emails).await;
 
-    Ok(serde_json::json!({"status": "ok", "sent": sent}))
+    Ok(serde_json::json!({"status": "ok", "sent": sent, "forwarded": forwarded}))
 }
 
+async fn fetch_emails(sqs_event: &SqsEvent) -> Vec<(String, parmail::email::Email)> {
+    let sources = sqs_event.records.iter()
+        .filter_map(|msg| {
+            let body = msg.body.as_deref()?;
+            Some((body.to_string(), serde_json::from_str::<S3Event>(body).ok()?))
+        })
+        .flat_map(|(body, s3_event)| {
+            s3_event.records.into_iter().map(move |r| (body.clone(), r))
+        })
+        .map(|(body, record)| {
+            let source = EmailSource::S3 {
+                bucket: record.s3.bucket.name.clone(),
+                key: record.s3.object.key.clone(),
+            };
+            (body, source)
+        });
 
+    stream::iter(sources)
+        .filter_map(|(body, source)| async move {
+            let parsed = fetch_email(&source).await
+                .map_err(|e| tracing::warn!(error = %e, "Failed to fetch email"))
+                .ok()
+                .and_then(|raw| parse_email(&raw)
+                    .map_err(|e| tracing::warn!(error = %e, "Failed to parse email"))
+                    .ok())?;
+            Some((body, parsed))
+        })
+        .collect()
+        .await
+}
 
-/// Local dry-run mode: parse a file and print what would be sent.
-async fn run_local(path: &str) -> Result<()> {
+async fn send_confirmations(ses: &SeS, emails: &[(String, parmail::email::Email)]) -> u64 {
+    stream::iter(
+        emails.iter()
+            .filter(|(_, parsed)| provider::is_forwarding_request(parsed))
+            .filter_map(|(_, parsed)| {
+                let (name, fwd_provider) = provider::get_forwarding_provider(parsed)?;
+                let confirmation = (fwd_provider.extract)(parsed)?;
+                tracing::info!(provider = name, originator = confirmation.originator.as_str(), "Detected forwarding confirmation");
+                Some((name, fwd_provider.render(name, &confirmation), confirmation.originator))
+            })
+    )
+    .then(|(name, email_body, originator)| {
+        let ses = &*ses;
+        async move {
+            match ses.send_email(&originator, SUBJECT_PREFIX, &email_body).await {
+                Ok(_) => { tracing::info!(provider = name, to = originator.as_str(), "Confirmation email sent"); 1u64 }
+                Err(e) => { tracing::error!(error = %e, "Failed to send confirmation email"); 0 }
+            }
+        }
+    })
+    .fold(0u64, |count, n| async move { count + n })
+    .await
+}
+
+/// Forward confirmed non-confirmation emails to the extractor queue. Delete unconfirmed.
+async fn forward_to_extractor(sqs: &SqS, emails: &[(String, parmail::email::Email)]) -> u64 {
+    stream::iter(
+        emails.iter()
+            .filter(|(_, parsed)| !provider::is_forwarding_request(parsed))
+    )
+    .then(|(body, parsed)| {
+        let sqs = &*sqs;
+        async move {
+            // USPS senders pass through — gatekeeper already validated them
+            if !is_usps_sender(parsed) {
+                let forwarder = get_forwarder(parsed);
+                let confirmed_key = format!("state/confirmed/{}", forwarder);
+                if !check_s3_exists(&confirmed_key).await {
+                    tracing::info!(forwarder, "Unconfirmed forwarder — dropping");
+                    return 0u64;
+                }
+            }
+            match sqs.forward(body).await {
+                Ok(_) => { 1u64 }
+                Err(e) => { tracing::error!(error = %e, "Failed to forward to extractor queue"); 0 }
+            }
+        }
+    })
+    .fold(0u64, |count, n| async move { count + n })
+    .await
+}
+
+/// Identify the forwarding party from email headers.
+/// O365/Bellevue sets Resent-From; Gmail rewrites From to the forwarder's address.
+fn get_forwarder(parsed: &parmail::email::Email) -> &str {
+    parsed.info.resent_from.as_deref()
+        .unwrap_or(&parsed.info.from_address)
+}
+
+/// Local dry-run mode: parse a file and print what the confirmer thinks the state is.
+/// Only checks local filesystem for confirmed state — no S3 calls.
+fn run_local(path: &str, state_dir: &str) -> Result<()> {
     let raw_email = std::fs::read(path)?;
     let parsed = parse_email(&raw_email)?;
 
-    if !provider::is_forwarding_request(&parsed) {
-        println!("Not a forwarding confirmation email.");
-        println!("  From: {} <{}>", parsed.info.from, parsed.info.from_address);
-        println!("  Subject: {}", parsed.info.subject);
+    let status = if provider::is_forwarding_request(&parsed) {
+        "confirmation-request"
+    } else if is_usps_sender(&parsed) {
+        "pass"
+    } else {
+        let forwarder = get_forwarder(&parsed);
+        if is_confirmed_local(state_dir, forwarder) { "confirmed" } else { "unconfirmed" }
+    };
+
+    println!("{}: {}", status, path);
+    Ok(())
+}
+
+fn is_confirmed_local(state_dir: &str, forwarder: &str) -> bool {
+    std::path::Path::new(&format!("{}/state/confirmed/{}", state_dir, forwarder)).exists()
+}
+
+fn confirm_local(email: &str, state_dir: &str) -> Result<()> {
+    let dir = format!("{}/state/confirmed", state_dir);
+    std::fs::create_dir_all(&dir)?;
+    std::fs::write(format!("{}/{}", dir, email), "")?;
+    println!("confirmed: {}", email);
+    Ok(())
+}
+
+fn list_confirmed(state_dir: &str) -> Result<()> {
+    let dir = format!("{}/state/confirmed", state_dir);
+    let path = std::path::Path::new(&dir);
+    if !path.exists() {
+        println!("No confirmed forwarders.");
         return Ok(());
     }
-
-    let (name, fwd_provider) = provider::get_forwarding_provider(&parsed)
-        .expect("is_forwarding_request was true but no provider matched");
-    let confirmation = (fwd_provider.extract)(&parsed)
-        .expect("provider matched but extraction failed");
-
-    println!("=== Detected Forwarding Confirmation ===");
-    println!("Provider:    {}", name);
-    println!("Originator:  {}", confirmation.originator);
-    println!("Confirm URL: {}", confirmation.confirm_url);
-    println!();
-    println!("=== Email that would be sent ===");
-    println!("From: {}", parmail::ses::FROM_ADDRESS);
-    println!("To:   {}", confirmation.originator);
-    println!("Subject: {SUBJECT_PREFIX}");
-    println!();
-    println!("{}", fwd_provider.render(name, &confirmation));
-
+    std::fs::read_dir(path)?
+        .filter_map(|e| e.ok())
+        .for_each(|e| println!("{}", e.file_name().to_string_lossy()));
     Ok(())
+}
+
+async fn check_s3_exists(key: &str) -> bool {
+    let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+    let s3 = aws_sdk_s3::Client::new(&config);
+    s3.head_object()
+        .bucket("parmail-692140489268")
+        .key(key)
+        .send()
+        .await
+        .is_ok()
 }

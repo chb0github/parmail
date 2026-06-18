@@ -26,3 +26,12 @@ COPY --from=builder /app/target/aarch64-unknown-linux-musl/release/parmail-confi
 
 ENTRYPOINT ["/confirmer"]
 CMD ["lambda"]
+
+# Image 3: parmail/gatekeeper
+FROM scratch AS gatekeeper
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /app/target/aarch64-unknown-linux-musl/release/parmail-gatekeeper /gatekeeper
+
+ENTRYPOINT ["/gatekeeper"]
+CMD ["lambda"]

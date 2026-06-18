@@ -1,0 +1,971 @@
+Return-Path: <christian.bongiorno+SRS=7t+K0=EN=gmail.com=christian.bongiorno@bellevuecollege.edu>
+Received: from CH4PR04CU002.outbound.protection.outlook.com (mail-northcentralusazon11023132.outbound.protection.outlook.com [40.107.201.132])
+ by inbound-smtp.us-east-1.amazonaws.com with SMTP id mif519d3mr0bi6bi1jdqslcss40a5uttbjsmml81
+ for usps@parmail.thetaone.io;
+ Wed, 17 Jun 2026 17:08:07 +0000 (UTC)
+X-SES-Spam-Verdict: PASS
+X-SES-Virus-Verdict: PASS
+Received-SPF: pass (spfCheck: domain of bellevuecollege.edu designates 40.107.201.132 as permitted sender) client-ip=40.107.201.132; envelope-from=christian.bongiorno+SRS=7t+K0=EN=gmail.com=christian.bongiorno@bellevuecollege.edu; helo=CH4PR04CU002.outbound.protection.outlook.com;
+Authentication-Results: amazonses.com;
+ spf=pass (spfCheck: domain of bellevuecollege.edu designates 40.107.201.132 as permitted sender) client-ip=40.107.201.132; envelope-from=christian.bongiorno+SRS=7t+K0=EN=gmail.com=christian.bongiorno@bellevuecollege.edu; helo=CH4PR04CU002.outbound.protection.outlook.com;
+ dkim=pass header.i=@BellevueC.onmicrosoft.com;
+ dkim=fail header.i=@gmail.com;
+ dmarc=fail header.from=gmail.com;
+X-SES-RECEIPT: AEFBQUFBQUFBQUFHR0FabTdRbEpCbGxMWE1DS2RMckxNSkpLenplM2JIMkFMSGRuQjl3NnR5YTVyVHg0cHdISXgzMUZLcVpGRE1pY1lkLzdLRGExZElaRFBTL2MyVXRIdmhEVGdJRmFFVm9hTCtxdS9hcEdwcDFWYVlCRzdZV2d5ZUUybGRXMVNQZXJBVXd2ZHFRcDYzOHBZQWVRY2hSSVpWZEtnc1lvZU5MNE4xaHJvZ2liRnpKNThoZ3JuNWFIV2xKQnlxeXNWclNvYTkrYjFNdCtZd3pxNWYydjJYcEpqS2NMN3kwWitBZlJOQWIvMG5KSDFiaFFYQlUrWmNKcDdlNTIrZVpZLy8rSlgwbm9vaEVqa2c5dW91eW42NFdFQnV3a241VFZvQnpYOFdBYUZZQVJBSm5zZVZza2NobTVCVjZISzc4U201NlR1MjZWSU1zRXE2RHJYWTM4RTk5Z1BJT29tZ0phckZqVkpSVG44STNsMjg1Y29yQVR5cFdGMzlCQ1ZDaGU1UlJ3PQ==
+X-SES-DKIM-SIGNATURE: a=rsa-sha256; q=dns/txt; b=Spoej+EMRDXM/GP+fYnEJHu3t0pl/wSOKY5QOAC1Dx4TiicHoo87I++sW7mlv9oZh8V0Tuir2TZNWhL5Rwe6w5hzHEiZM4WXrg7mgGcqQlFlI+CXJa0qkcJ9oUvjqplmsGO5FwZIi7uSzycKtKlhY2GR5udeLmfb7lmLdVuXCw8=; c=relaxed/simple; s=224i4yxa5dv7c2xz3womw6peuasteono; d=amazonses.com; t=1781716088; v=1; bh=++8KGDwf9KeQ/8cxuoOtd0QszWYbsqQDqrMW3nYbJ7s=; h=From:To:Cc:Bcc:Subject:Date:Message-ID:MIME-Version:Content-Type:X-SES-RECEIPT;
+ARC-Seal: i=3; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=pass;
+ b=icjhCeS7J2NcnwTqoj7nl2RfWXN9xPGVaV2YoMkAvMQvH0V/QjGg3sVtDoizdnHV6SdAhA8+s22VKPHVFyEJDcKiv0GflUp17QEXB4xu6HL1IEDUP1kbGZqRjmSIE39q+FzdQe7kuELDGN2iZ9H7cDc2oCD0yh5WP8hgoAIl+zPz5f8FWG6byENG9ETsU99rsD4dZaUGCobiT6oY8rFWhN4j42MlfOwUpoa301mH4lC14jCcR8ldyLeNoMtxbou2KEcu6PlJsfhSwl61aQeP/yj1omGzaWZqu59E8vFvJnU2O8JvD3Q7yOdDPXdSUhTqB1mEifdBHMNPeYtsm3F0og==
+ARC-Message-Signature: i=3; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=Zhh9wOBFCXsRsXXMprdoGoLfkk+3dkn6AS/H+nY8h/M=;
+ b=fAzRdn9vDvG9GnvL6lGzPQvULiJAH5vFi/V1YfcbtFv43Sio6A/+jPz8JOFDhN/rDQMqrivUxNS+naBYUdwgZ4p+J1vC453IJ20SlCWDzhkuvG+XcNmPBDxRYX1impNRxnntBISSoE67oJ+G9A7LZBTgmt9h6TZgL8w20GfGv8+VfYYl5+g9axCmYJjdl0YQAdZjGSBWpqC+LrWc76y7n7BdfYBOoVc33mkWwz76g5VuXMDBHGDevYtHHRHJClu/n/ty5FMvAoyG7FMgInTJ31pe2HFCeskkQVSjhRN/BLR5NFiezn9tXyGW23EPz48YJGSM1xhucsm961Lzzq7/sQ==
+ARC-Authentication-Results: i=3; mx.microsoft.com 1; spf=pass (sender ip is
+ 2a00:1450:4864:20::12b) smtp.rcpttodomain=bellevuecollege.edu
+ smtp.mailfrom=gmail.com; dmarc=pass (p=none sp=quarantine pct=100)
+ action=none header.from=gmail.com; dkim=pass (signature was verified)
+ header.d=gmail.com; arc=pass (0 oda=0 ltdi=1)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=BellevueC.onmicrosoft.com; s=selector2-BellevueC-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=Zhh9wOBFCXsRsXXMprdoGoLfkk+3dkn6AS/H+nY8h/M=;
+ b=CVaTZ2Sjwv8WmhdtVRHCB0r+8Mg/cqv1O/fr7zE0lo0pcTUgz4YiMvCImE9J9OquuFIRPlWKWCft1v/XCnqsOV4MWrBaeS+yNnFgZl0cj5JzYFGyco50Aa/tyVCcbti4Le+43nfnN2kVuWcOkEl2AR+DrqJl3FoV/OwwY7G9aSw=
+Resent-From: <christian.bongiorno@bellevuecollege.edu>
+ARC-Seal: i=2; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=pass;
+ b=u8wFsEBFfGF9SiUgB7PXVuQmUBxHBUEZ4VXhJh+3sFycZk3rYc5FI0x+0UCkTj6HvIzV2/lxmO9ZkUBmeLzDwxdqly2ky+jlh1k7IPBls9VcXU2wim2Dn9mkKpEYg3RTrAq7pJmXhly9xZQSJawH0hWp9hPWtbxP7CbyFrVMVrE2cQOk83zxS5soQAYpLRu5+ubSrxZcHUwWIltqj74/27MOw+2gfLOjNoq95H+xsJkUo5yq4F+6ODUKJukYiNkdx8M+GbQVZJb7tBpKqae1XmE51p4zhOjd1HSMbGtxud3bZnnstJigy85XRReMqfUoyj6ikdkNT3JcX4DtKYZkuA==
+ARC-Message-Signature: i=2; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=ZOHOqPJxUd431DocaVGnVjXGEwUSfT3O8jliL22f6xQ=;
+ b=j4neEtpvtTczAwMvfjLvJAYXxBHCU/MSA8g2IPHu2QEnqh7ay+TMm3iDp3CnGg2ToUfnyQfWrOXZU9MlD0fzIFX9KezZPGsC48hhTj7mxEGjoxyqbZd/pbP1kLXFontp1X0vQQqhamLxFk9yuClVPkUzeWlF+SCfFzMKFlIYowNnvb/ZcvGWhZ0mQDNrgLpA7uRHKBDQFOaBPWO7bGcF/+lc6n1doxY8DZAlwhrbrXHP/S1QRV7Hu9Kx22kTabxnRZPkgnFkXuvDIutMWlqIL+Q6kQBHDv1LrQE498RK75x+vccD6g1Gs6O33EFZaHLEPHInRG9ut5ETB9cEgH+hEA==
+ARC-Authentication-Results: i=2; mx.microsoft.com 1; spf=pass (sender ip is
+ 2a00:1450:4864:20::12b) smtp.rcpttodomain=bellevuecollege.edu
+ smtp.mailfrom=gmail.com; dmarc=pass (p=none sp=quarantine pct=100)
+ action=none header.from=gmail.com; dkim=pass (signature was verified)
+ header.d=gmail.com; arc=pass (0 oda=0 ltdi=1)
+Received: from DS2PEPF00004568.namprd21.prod.outlook.com
+ (2603:10b6:f:fc00::50c) by LV2PR08MB972923.namprd08.prod.outlook.com
+ (2603:10b6:408:3a0::8) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.139.11; Wed, 17 Jun
+ 2026 17:08:02 +0000
+Received: from DS1PEPF00017097.namprd05.prod.outlook.com
+ (2603:10b6:2c:400:0:1007:0:5) by DS2PEPF00004568.outlook.office365.com
+ (2603:10b6:f:fc00::50c) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.21.159.2 via Frontend Transport; Wed, 17
+ Jun 2026 17:08:02 +0000
+Authentication-Results: spf=pass (sender IP is 2a00:1450:4864:20::12b)
+ smtp.mailfrom=gmail.com; dkim=pass (signature was verified)
+ header.d=gmail.com;dmarc=pass action=none header.from=gmail.com;
+Received-SPF: Pass (protection.outlook.com: domain of gmail.com designates
+ 2a00:1450:4864:20::12b as permitted sender) receiver=protection.outlook.com;
+ client-ip=2a00:1450:4864:20::12b; helo=mail-lf1-x12b.google.com; pr=C
+Received: from mail-lf1-x12b.google.com (2a00:1450:4864:20::12b) by
+ DS1PEPF00017097.mail.protection.outlook.com (2603:10b6:2c:400:0:1007:0:5)
+ with Microsoft SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id
+ 15.21.139.8 via Frontend Transport; Wed, 17 Jun 2026 17:08:02 +0000
+Received: by mail-lf1-x12b.google.com with SMTP id 2adb3069b0e04-5aa68cf03bfso27247e87.0
+        for <christian.bongiorno@bellevuecollege.edu>; Wed, 17 Jun 2026 10:08:02 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1781716081; cv=none;
+        d=google.com; s=arc-20240605;
+        b=XWznXDsikNlQQyGGI17pRStZIbI1T4tt1DhlJ/GcTdwb3QtV6nH63LzUQCiCbmUe5W
+         GhvKS7XMpIrb4E0m0vkub6ZnFyOG3SFZlWdgq6RqU7PbOtj842/0ePbAycxnchGHgGQv
+         EzRK4k1Qp8DyJasibLg7Rhikga71cYb8xjfBLY8jjBEvyrmnwBaw7fzz1l2Ipx3elNSd
+         hmpRdrPS4mCET+MW0UtVgsf/5mRaty6SjBoFIvsyTwG6kX9FUH2QfQwM4eN81gRXuS1q
+         yTQgFY567ocxiuHy3RdeIRwCwhNKBCvyJ1pdsqOSbpjt7WjeC1arF3s5PJzG8MOFenCO
+         GySA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=ZOHOqPJxUd431DocaVGnVjXGEwUSfT3O8jliL22f6xQ=;
+        fh=L9igFNVXJ6oYO5vAvcDNgZoL+gIex9YGXqZlNCgYR+4=;
+        b=Dd/nmoyysgVI7ArBGKoMPbaAfc3QKyOrPzBjee9w5PyZEiQmJBu0erL2e6PjzpaGqU
+         pmwpSE1ZToQeL9S5o4R9HXuy4GI3cI4wGSoh52KvPu9R7NcNjZC98eqWXcrSQyxvvZ2d
+         49wY8XYOtXUuAKgIFIl5oAacNsT8zpzOhwe36De/EQqq0vmpqavPj6BM76NDViYnkxei
+         gkm0RDHTLuEzqgFnQkBq2ftMxkrQBJMiE2olDLTpPJC8ByBabSIIBeb4KsnSGqE2Lw1h
+         LJSJPotBK0DZtM3kibBzNe/sXtduItHuMRSQcCzG8FBb8AzSQyCA9eV6zTJacoPjRzVg
+         jgkg==;
+        darn=bellevuecollege.edu
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1781716081; x=1782320881; darn=bellevuecollege.edu;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=ZOHOqPJxUd431DocaVGnVjXGEwUSfT3O8jliL22f6xQ=;
+        b=kPWikFCQWDr9r+AJSaDzRRSqF3XKnKxw6BD1Rphh5+HepQ1fWg3OCoFhe58fzceRin
+         xLs6sh+wK5lO01aP65NvvCFSmp24ymrWnIXct8ZNx9eu0KpVIO2GMM49gDmYRZfo5tJM
+         7eePkXhRXKqVefPjfScm6f2dKJ0tA+X1J7tInS/4t0J4vW0e4JMoP5i3yOysEE+NTtQK
+         4MACst1fQw5F22VSU5QYUhAjhtaIBJcJQd7/xviSmD347lbGxd7AKryhDAnQsR1M9EP2
+         ncr7ipUX8SpFyIVDSXlHV7uy2gH9Cuuds+rD10W/7v0l0775eXCLt/HuXa7Wx8G31Qg8
+         vwvQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1781716081; x=1782320881;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=ZOHOqPJxUd431DocaVGnVjXGEwUSfT3O8jliL22f6xQ=;
+        b=jOY1yQXHISbThnMXvqbbgrAa3hIPCfGDzbQEaTWqdS70Mo+TXVMptk/frNvkWIWHSg
+         +xGIX25CCW9MiLEt65uNsfP/y39GT9Q+EYEKKRTRev7B2pcJT8D/LDnrfcOSnyxO968X
+         xQjWleWz40kARUxt0aHNFJrNj4mdBXNJHxHMVxNMCxi0i0cZcTy7cNL0Ohr8WsC9SSN1
+         /cpjbAdqq5roJLOAZhFl750IFNBo0awr3V19oN5ZyCQsOLfJf6F+jW6x2HokhyYm2R+y
+         b6yWEnAxH9+UsRauhGbQo2aFsYudf9t+aT943/KCNwZSjdg9sFiwp1/1IehGQfKDe43q
+         BNDw==
+X-Gm-Message-State: AOJu0Yya72hLAgXBJLyxJ9TCZ66OfRdVWDiFsYEE4RjDEQOW8DnZtO6R
+	Acm/cih+6+H6vjBqeer54yr/YnV3jVT6U8R0vJyvddn5IpAiYxlqfQPuw6MENOulFYb7O19HXik
+	vGCt7DrRVfsmQodClvkPI8ZV3PTPP99aw5bM=
+X-Gm-Gg: AfdE7clX5ilCmKMjPcUx1YChCwy5Ie5LrUFmVSicnI4shsrGFTY10zO6ZdoD+dv1nS/
+	zi6M/bFGMHQ+0KOagWYp0Q4We41HWanc4UTs4P6BQMVLPzpj2etwF0Wb1uDWjaY31mPiB6Nq7Qi
+	1kKZm0Des1ewG+Ol9wVC+AHEzBtLCHu+NFi8QUFrwIjyEzT9X69CuCMTOO0uoA4M4HEdGpvDnX+
+	Zt1CNTQBZxaOyOwmOwJX98vp3ZeO0jmNFY0A/39PoGS361golhtJhtM/8QgP4OFDtWAwSs54u+3
+	cg36gRpow9155fVilIavWHUepjInDLalnQvcosLbj+pP5H9r95Yli/1/45p0l0AQIRN3syM3rlV
+	ZWC/C/KsAnUOw4D1ru9dLcK1hNiRvUYlF7ael53JbJiWfjoxVLy3W1umnKZIodKDK
+X-Received: by 2002:a05:6512:110d:b0:5aa:6aac:3f7f with SMTP id
+ 2adb3069b0e04-5ad46fdb561mr1457713e87.22.1781716080414; Wed, 17 Jun 2026
+ 10:08:00 -0700 (PDT)
+MIME-Version: 1.0
+References: <20260617142443.7cb6757b9f889186@email.informeddelivery.usps.com>
+In-Reply-To: <20260617142443.7cb6757b9f889186@email.informeddelivery.usps.com>
+From: Christian Bongiorno <christian.bongiorno@gmail.com>
+Date: Wed, 17 Jun 2026 10:07:47 -0700
+X-Gm-Features: AVVi8CdjHWHTqPzW__VewrW6QKVccWDU1UxCFoqLgNNAHQ_NrIojGq_Rz4eVGe0
+Message-ID: <CANdjUb6i4J9cq0y1ky5BNGuu=9dZMpRMAgcuSYi0bwc5zSSKww@mail.gmail.com>
+Subject: Fwd: Your Daily Digest for Wed, 6/17 is ready to view
+To: christian.bongiorno@bellevuecollege.edu
+Content-Type: multipart/alternative; boundary="00000000000010580c0654761a01"
+Return-Path: christian.bongiorno@gmail.com
+X-EOPAttributedMessage: 0
+X-EOPTenantAttributedMessage: f94c251c-1347-422e-b3ea-8ac56befd6cb:0
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: DS1PEPF00017097:EE_|LV2PR08MB972923:EE_
+X-MS-Office365-Filtering-Correlation-Id: f93668f1-5bf4-4f9f-c83b-08decc92fd8f
+X-LD-Processed: f94c251c-1347-422e-b3ea-8ac56befd6cb,ExtFwd
+X-MS-Exchange-AtpMessageProperties: SA
+X-MS-Exchange-SenderADCheck: 0
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|4022899009|31052699007|39142699007|48200799018|69100299015|7093399015|376014|786006|1032899013|9140799003|7149299003|61400799027|7049299003|3109299003|56012099006|11063799006|5063699009|18002099003|16102099003|22082099003|4133799003|8096899003|55112099003|2066899003|13003099007;
+X-Microsoft-Antispam-Message-Info:
+	=?utf-8?B?MlNTK1pod0Z4WWtrQ08xRFVXSFRNRlpiSk5HSFZvUFpiZGs2ajEvRktKZ1VU?=
+ =?utf-8?B?QlM4MGI0MjU4TDB4MEVHVm5jRGk0UmY1NjZ1cTR3Wk1FTVBId0IzYXQwVmFF?=
+ =?utf-8?B?VWVCcWJFUDlYMmxoMm1LUmpoOVFhQ3lKOExTSjZXM0h4ZEI2aFQ0cmdHQTUr?=
+ =?utf-8?B?OHZ0eFdBZ3pGcTNINk9XVTY4K3h3d2NpeXBoOUpDZEp0bGdQa1BmejcvTFVS?=
+ =?utf-8?B?Nk5yQnBRZEFidGlyYWFIL2tzVDRNQUhCWmhVV1ZiZVBGbHdZZ2xkUFVLUXRJ?=
+ =?utf-8?B?cGlEa3hJWThJTWFFdzVzRVlGU0h1cXJLL3MxSlB2d2Fzc2Myd0xSZ1FVN3dC?=
+ =?utf-8?B?ZGYxNkY4ZVZoRVFmN1RMQU9sYXFXYmM0ellYdHlva1VuWWdQL01CSTA4OSsx?=
+ =?utf-8?B?NFJOL1BoczhSa1FlSGEvUldYTGk2SzBBYS9lSG02eHJPNW5Wa0FNbmhLRFNW?=
+ =?utf-8?B?eUhHQXVZMDB1YnlialFVcFNDQ3VxQlpFWGZpakk5aStzUVZaeUJpdlZJRU1N?=
+ =?utf-8?B?bW5MSUhIWTRlS3FidjlHN1lZSlVEV2hWSjRtcEFCYTdjVFV0NkphbVZML0JG?=
+ =?utf-8?B?SUVTTUJ6cGp0WVdTcUJOTHAvdVY5RmsxRDBweXRJZjdzVTBZb1A0dGNXUHpH?=
+ =?utf-8?B?ZDN3dk81WVYrWm90QnFmZVhCSHlSZENNY3VVZ0YxdTZvd2YzcUE4dW5QT0Jo?=
+ =?utf-8?B?QjM2VUVWUk9PVzJnWWVTM1N4dForblB2MGV6b2FKa0N5TmdNekkxYURoMXFq?=
+ =?utf-8?B?bXArd2RHenFoRVlJWVFBYWlKdWJkV2xnem9tK21hZ1k0clJMMDkyRXd2TUNF?=
+ =?utf-8?B?ZVBHQ0I0VUhDSWpadENxUlJYbVFwTUNJNXJHclA2d3JPeXdwSnFXQ1pnaXNE?=
+ =?utf-8?B?KzNKS3VyQ3FjNytyZ3VQbmlRVVpjSE1FVTE5UGFxWUxLckt1Y2FlUENacUNV?=
+ =?utf-8?B?VGdUTEFYUUhLTTJySnltSE5oQzJDMjdZSjBiVmc4NCt5dGVpR2tKakUrSU4w?=
+ =?utf-8?B?Y2ttcSt5dVExS2syWHpIWUxMNkEvY2JiTXVrdUFxVmRrSzlwRzhJZXdQQU9z?=
+ =?utf-8?B?di9UMGxqbWpGNVlYbDFXY21ydHBsMU0rTEJVTmh4dU5nakV1SmpFMGdzb3BG?=
+ =?utf-8?B?bkw2VEFzNDNBTmpZYzQ1SmdoakFwazROMUxsNkJmalhrYm1qa3FBT1BnZnhP?=
+ =?utf-8?B?R2FwQXJ1WGxJY1FyWWNjWUhtTGZtQVBud0o0K1ZGV1ovWWdNd2lIL2k2V2Qz?=
+ =?utf-8?B?NTUvWmQwZGErbUFYSEtYMitoeFFtSFQ3ZkNabVVmTjhkdFoxT1hjMGxrYURO?=
+ =?utf-8?B?SnBpUGZWVWg5UDV0MmY3WElGbTNDOWM1MUZRM3BqNXJLVXdvNDB1SFV4ZG5w?=
+ =?utf-8?B?MkQ4SDVYWTdyNFVaUjNuV0FxaUlCL01BS01HSC9qdWlwZ0U2QkEzZ1cycTc5?=
+ =?utf-8?B?TVdLV1JlT2JCVmh0L0RTeUkwT0h6MEpXUTg3OEVseDIwcmk1UCsydUNncU91?=
+ =?utf-8?B?bXpaeEptUlM3YzVqVEh4bmU3N2YxdURuK1BSMnNxVnhrMFNQMTM1RkFZbCtH?=
+ =?utf-8?Q?L+NswS5RmkEqbgpkAMHPjz30ivll7WZrulN/U2s7L5vE8u?=
+X-Forefront-Antispam-Report:
+	CIP:2a00:1450:4864:20::12b;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:mail-lf1-x12b.google.com;PTR:mail-lf1-x12b.google.com;CAT:NONE;SFS:(13230040)(4022899009)(31052699007)(39142699007)(48200799018)(69100299015)(7093399015)(376014)(786006)(1032899013)(9140799003)(7149299003)(61400799027)(7049299003)(3109299003)(56012099006)(11063799006)(5063699009)(18002099003)(16102099003)(22082099003)(4133799003)(8096899003)(55112099003)(2066899003)(13003099007);DIR:OUT;SFP:1102;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	vKTjBGDYv73FykTIMvsuOiyuXPpcNzsODdbW1V6h2dlEv6NiRKhCfDJaUzAAjlLxvj1uYRHq2AS9l9+pKKlCgK1tXDV5JbWIh2t05d4AWHyiYW6zS5NXZ+OhiRMCNDr2NjawsvVxpkJ+Kll6Z7VI30ZqeufL+tHdU0XNTo7JnszVz3g+zc1xMZcqlb+nJwi2chmXJ081hlLkyp/gJv/f0w6rmQP3Fos7sIjUybQ1w4F/aqc1J99aETmW+NjdLZ6jZil9B6CRn8pv9CxVdUqqykshoYXDYW1EvW8RpyL0t7qVhn58zMvMT1+fhX1agBNNTnAo8345RkIN6Us9SJPldK6sYw4n9sLQpTkh44ic52Jczr7E4RaeFr7oTmoOkKwV1j/kLSmY2ydcydEypq8bftdHyiE3KYZpwECF/pnMF55d4qQml5WOAj6JsJO4gboZ
+X-ExternalRecipientOutboundConnectors: f94c251c-1347-422e-b3ea-8ac56befd6cb
+X-MS-Exchange-ForwardingLoop:
+	christian.bongiorno@bellevuecollege.edu;f94c251c-1347-422e-b3ea-8ac56befd6cb
+X-OriginatorOrg: BellevueC.onmicrosoft.com
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Jun 2026 17:08:02.3585
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: f93668f1-5bf4-4f9f-c83b-08decc92fd8f
+X-MS-Exchange-CrossTenant-Id: f94c251c-1347-422e-b3ea-8ac56befd6cb
+X-MS-Exchange-CrossTenant-AuthSource: DS1PEPF00017097.namprd05.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: LV2PR08MB972923
+
+--00000000000010580c0654761a01
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+CAUTION: This email originated from outside Bellevue College. Do not click =
+links or open attachments unless you validate the sender and know the conte=
+nt is safe. If you are unsure, contact the Service Desk at x4357 (425-564-4=
+357) or email servicedesk@bellevuecollege.edu.
+
+
+
+---------- Forwarded message ---------
+From: USPS Informed Delivery <USPSInformeddelivery@email.informeddelivery.u=
+sps.com<mailto:USPSInformeddelivery@email.informeddelivery.usps.com>>
+Date: Wed, Jun 17, 2026 at 7:24=E2=80=AFAM
+Subject: Your Daily Digest for Wed, 6/17 is ready to view
+To: <christian.bongiorno@gmail.com<mailto:christian.bongiorno@gmail.com>>
+
+
+
+
+
+[USPS Logo]
+COMING TO YOU SOON
+Hi, Christian!
+
+You have 0 mailpiece(s) and 0 inbound package(s) arriving soon.
+
+Wednesday
+17
+June
+2026
+
+0
+
+Mailpiece(s)
+
+
+0
+
+Package(s)
+
+Hi, Christian!
+
+You have 0 mailpiece(s) and 0 inbound package(s) arriving soon.
+
+Jun
+17
+0
+
+Mailpiece(s)
+
+0
+
+Package(s)
+
+[Icon Envelope]
+  MAIL
+View Dashboard <https://informeddelivery.usps.com/trackingV2/digest/click?a=
+=3DhMLXAgfT8cs1TFOn0bEkO0euH6yG3ZriypiTydnQOG9ArUvpYVLhDsaIRSwaYdrMOBRa0vHo=
+NPb1PQOfuNnrk1MS3j_fSOtETyWhO5BRtq3x52sv-MT-HSRTBiZ2d6ISwz8ZmKgfsUvyGcZlEjK=
+lVMBND_AwAUFNGD2kVNuxcKFHdodnnY4bzEHdPi_NoxTnHOboipPiUG7qUTbJiLA>
+[multi envelope icon-dark-mode image]
+
+There is one or more mailpieces for which we do not currently have an image=
+ that is included in today's mail.
+
+[Package Icon] <https://informeddelivery.usps.com/box/pages/secure/Dashboar=
+dAction_input?keyword=3Dpack>
+  PACKAGES
+View Dashboard <https://informeddelivery.usps.com/trackingV2/digest/click?a=
+=3DhMLXAgfT8cs1TFOn0bEkO70EDmNr7RhU5GHv3oyUk8YSRJlB0GZD1xWkOMaU9mmyuFkgLQLe=
+yEP_6Njv50haghveZ56ESxQV8JAWcFUSl7Ts9br5UDj-h9i1m7MnYz5UhMJbzcGY-xCRcCPengg=
+_Mr1v79vU3_-dPM5q-L_tZhBvmYG5hls7fDlpmAVNjD82dYaK3xheSy0-bh3ern6WzKw>
+No packages are available to display.
+[footer banner]
+Refer via Email<https://informeddelivery.usps.com/trackingV2/digest/referra=
+l?a=3DhMLXAgfT8cs1TFOn0bEkO6A1MeReSe9eRx_UxaNV-lIRtpsnYApLutU_DzsOe3v84ZIWn=
+jtPA8v1z8X549U9M2lepMSUlAP42SVprzuYDd1Jrt-ddF4e7dxgmZSyrYBXpjhuciaNitcnWtBx=
+FX27MzcAT_qN9olnxzq2VTypu3BHRGQqV_86o0LIsemeQNTzLWOWGg> Refer via Text<http=
+s://informeddelivery.usps.com/trackingV2/digest/referral?a=3DhMLXAgfT8cs1TF=
+On0bEkO0JBWLvCQJfu5jdnEInvnfTt72ptE2IzGsur5ouG5SNJaX5KP69M5ldm9_wO_k3whQ6tD=
+M0nBJ1vNLtniOHADeaZCoCEiEpbAzh9LtnDLLoQ96G5ZUdauTYHSj9-C4wLVPKMd2lDt3MN9z9O=
+-yGk17sX1ek83mGQw8Nc84jHEwwujWI>
+
+You may have more mail or packages than are shown in your Daily Digest. To =
+check, go to your Dashboard<https://informeddelivery.usps.com/trackingV2/di=
+gest/click?a=3DhMLXAgfT8cs1TFOn0bEkOzs8TJ5jox2TLdf1d1FPdhxj8tNvWACKlBvsV5vI=
+xeWW6gOYfCFFS9YCRoPxr4qw7sYHf8oLh-3Rq5mBu5zyj024Cqq0SDrLg7bvLt6zk9uR0QZh2No=
+dEynlyGs3xyEiouI0djwLQZDOzMFZcRae006YIBdxLFHmDihEqqqpT7cMyVt207yHqhVIAtmx6H=
+w6wb0>.
+
+Mail may arrive several days after you receive the notification. Please all=
+ow up to a week for delivery before reporting missing mail. Report missing =
+mail<https://informeddelivery.usps.com/trackingV2/digest/click?a=3DhMLXAgfT=
+8cs1TFOn0bEkO11_T_sc-x8lKzLIMaBFVviFKdYVE4HGQ0BF1Y1eP54EYiUAsZ--4eeYgi4enSx=
+6VFdoSFtIA1fGilRk0FIbELOqo2QWJEny7_9RPq6M5JVd6TIHHYTvjx5SLab1xaJ1sNI9AWnhFB=
+oFAlwwGP4lhycgqQjy2Zr1qTTfcUBa3LUi8YRr4hKBeRLOBzvsmqnkF7YV>.
+
+*These images represent mail pieces that are sorted on USPS=C2=AE automated=
+ equipment. Some of your mail may not be shown here.
+
+You subscribed to this service with USPS=C2=AE Product Technology Innovatio=
+n, 475 L`Enfant Plaza SW, Washington, DC 20260.
+
+If you no longer wish to receive daily email notifications, unsubscribe her=
+e<https://informeddelivery.usps.com/trackingV2/digest/click?a=3DhMLXAgfT8cs=
+1TFOn0bEkOwpTUxlIsNV5TKHNPz7c7FyZEWAh6eGBL4PU0Bn7H2hqGqPzLHqJNT4WWV0du-UsGA=
+1pMSbFlxLfhsMXZpNcpimF9beyiTzHQ6r3PflZS_mmE-5lUJSrzNhR3CCWG6jNzAx2BugjWGC-S=
+jvcyUiGYNODOaco_MN8vbiNOlEdN8Tq_2QPU-M4r9rVDJC4rm_laKiVV0YIVG1ScYxZvgEdmKh-=
+8sFQPwkeNXuPmbQezIj2zxRc_8ZkZb8>.
+
+If you need support, please visit user support for Informed Delivery=C2=AE<=
+https://informeddelivery.usps.com/trackingV2/digest/click?a=3DhMLXAgfT8cs1T=
+FOn0bEkO4RQWaSEc9BptlnR1EO59xYzT0PkX192g1PV4qNG5-WN8jA4QZFWNOCqll93i1ob0Vgn=
+epLf5aua2F2zujM--4dCOw458llX-UlkMGzoIgYF9pHcOimCH98bQYNycLrjF8q6IV2JE4Smb8J=
+kvVwrqvRHeQfY7wW9B3GiXC6P6rIFZs8yvd6cw1e63r2tisyY-Q>.
+
+For more information about this service, please visit general information a=
+bout Informed Delivery<https://informeddelivery.usps.com/trackingV2/digest/=
+click?a=3DhMLXAgfT8cs1TFOn0bEkO_Aw21IkRt-GpvksabLxBrLkVVn-RfbPDQx24CnPq6CNJ=
+7Nrz3D1uMM6cFuBXhz2CHYX-TeZ26c27N1qjAX_9Da6r1d53iIPkTmYsrhXxOcFVMmmcsfQTTmk=
+L6GPuglZCLGGPRAz_aGNrQejYdgt2sMxaIWHxYhh56RQQHV-xdRq7xXLDA>.
+
+Copyright =C2=A9 2026 United States Postal Service=C2=AE. All Rights Reserv=
+ed. The Eagle Logo and the trade dress of USPS=C2=AE Packaging are among th=
+e many trademarks of the U.S. Postal Service=C2=AE.
+
+This is an automated email, please do not reply to this message. This messa=
+ge is for the designated recipient only and may contain privileged, proprie=
+tary, or otherwise private information. If you have received it in error, p=
+lease delete. Any other use of the email by you is prohibited.
+
+
+--
+Christian Bongiorno
+
+--00000000000010580c0654761a01
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8">
+</head>
+<body>
+<p></p>
+<div style=3D"background-color:#FFEB9C; width:100%; border-style: solid; bo=
+rder-color:#9C6500; border-width:1pt; padding:2pt; font-size:10pt; line-hei=
+ght:12pt; font-family:'Calibri'; color:Black; text-align: left;">
+<span style=3D"color:#9C6500" ;=3D"" font-weight:bold;=3D"">CAUTION:</span>=
+ This email originated from outside Bellevue College. Do not click links or=
+ open attachments unless you validate the sender and know the content is sa=
+fe. If you are unsure, contact the Service
+ Desk at x4357 (425-564-4357) or email servicedesk@bellevuecollege.edu.</di=
+v>
+<br>
+<p></p>
+<div>
+<div dir=3D"ltr"><br>
+<br>
+<div class=3D"gmail_quote gmail_quote_container">
+<div dir=3D"ltr" class=3D"gmail_attr">---------- Forwarded message --------=
+-<br>
+From: <b class=3D"gmail_sendername" dir=3D"auto">USPS Informed Delivery</b>=
+ <span dir=3D"auto">
+&lt;<a href=3D"mailto:USPSInformeddelivery@email.informeddelivery.usps.com"=
+>USPSInformeddelivery@email.informeddelivery.usps.com</a>&gt;</span><br>
+Date: Wed, Jun 17, 2026 at 7:24=E2=80=AFAM<br>
+Subject: Your Daily Digest for Wed, 6/17 is ready to view<br>
+To: &lt;<a href=3D"mailto:christian.bongiorno@gmail.com">christian.bongiorn=
+o@gmail.com</a>&gt;<br>
+</div>
+<br>
+<br>
+<div class=3D"msg7320327349364489034"><u></u>
+<div marginwidth=3D"0" marginheight=3D"0" style=3D"margin:0 auto!important;=
+padding:0!important;max-width:820px!important;font-family:Arial,Helvetica,s=
+ans-serif">
+<p style=3D"display:none"><br>
+<img height=3D"0" width=3D"0" alt=3D"" src=3D"http://pixel.watch/1ewx" styl=
+e=3D"display:none">
+<img id=3D"m_7320327349364489034email-tracking-href-id" height=3D"0" width=
+=3D"0" alt=3D"" style=3D"display:none" src=3D"https://informeddelivery.usps=
+.com/tracking/emailRead?emailToken=3Dd666a1df-b593-466e-ab69-28110de7a21c&a=
+mp;sentTime=3D2026-06-17T19:13:48.811Z&amp;deliveryDate=3D2026-06-17T05:00:=
+00.000Z&amp;origin=3DcloudDigest">
+<img id=3D"m_7320327349364489034cloud-email-read-href-id" height=3D"0" widt=
+h=3D"0" alt=3D"" style=3D"display:none" src=3D"https://informeddelivery.usp=
+s.com/trackingV2/digest/open?a=3DhMLXAgfT8cs1TFOn0bEkO5BUchook_m_8UJK9VDtFH=
+s7weGQUV_OMLXfASBQAusMbPpJsKpIh7W2cwmWKiEQ638CKFBaPe0zne_PPYYfVz3Rd6dhgjmrJ=
+B-4r-MbXJA8q8No8bRKBYY2MSY-zCly5DXUs6fq2M-9g_rKSSzwv-EVaKJEyOZHyyTHCg">
+</p>
+<div class=3D"m_7320327349364489034custom-email-doc">
+<table role=3D"presentation" align=3D"center" width=3D"100%" cellpadding=3D=
+"0" cellspacing=3D"0" border=3D"0" style=3D"table-layout:fixed;display:bloc=
+k">
+<tbody>
+<tr>
+<td width=3D"*">
+<table role=3D"presentation" class=3D"m_7320327349364489034header" align=3D=
+"center" style=3D"text-align:center;width:100%" width=3D"100%" cellpadding=
+=3D"0" cellspacing=3D"0" border=3D"0">
+<tbody align=3D"center">
+<tr style=3D"width:100%;text-align:center;margin-top:40px">
+<td style=3D"padding-left:20px;padding-top:40px;width:100%" class=3D"m_7320=
+327349364489034responsive-header-logo">
+<img src=3D"https://www.usps.com/email/id/uspslogo.png" alt=3D"USPS Logo" w=
+idth=3D"64" height=3D"36"></td>
+</tr>
+<tr style=3D"width:100%;text-align:center;vertical-align:middle" align=3D"c=
+enter">
+<td style=3D"vertical-align:middle;width:100%;text-align:center" align=3D"c=
+enter">
+<h1 class=3D"m_7320327349364489034responsive-header m_7320327349364489034pr=
+imary-font-color" style=3D"width:100%;text-align:center;line-height:40px;co=
+lor:#333366">
+COMING TO YOU SOON</h1>
+</td>
+</tr>
+</tbody>
+</table>
+<table role=3D"presentation" class=3D"m_7320327349364489034header m_7320327=
+349364489034desktop" style=3D"border-collapse:separate!important" width=3D"=
+100%" cellpadding=3D"0" cellspacing=3D"0" align=3D"center" border=3D"0">
+<tbody style=3D"border-collapse:separate!important" cellpadding=3D"0" cells=
+pacing=3D"0">
+<tr class=3D"m_7320327349364489034email-box-shadow" style=3D"border-radius:=
+20px" cellpadding=3D"0" cellspacing=3D"0" border=3D"0">
+<td class=3D"m_7320327349364489034primary-background-color" align=3D"left" =
+style=3D"background-color:#333366;color:#fffffe;width:50%;padding:20px 20px=
+ 10px 20px;border:1px solid #707070;border-right:none;border-radius:20px 0p=
+x 0px 20px;border-collapse:separate!important" height=3D"100%" cellpadding=
+=3D"0" cellspacing=3D"0" border=3D"0">
+<h2 id=3D"m_7320327349364489034userDeskGreet" style=3D"font-size:22px;color=
+:#fffffe">
+Hi<span id=3D"m_7320327349364489034userNameDesk" style=3D"font-size:22px;co=
+lor:#fffffe">, Christian</span>!</h2>
+<p style=3D"color:#fffffe;font-size:16px;font-weight:100;line-height:28px">=
+You have
+<span id=3D"m_7320327349364489034total-mailpieces">0</span> mailpiece(s) an=
+d <span id=3D"m_7320327349364489034total-packages">
+0</span> inbound package(s) arriving soon.</p>
+<h2 style=3D"font-size:24px;padding:0" id=3D"m_7320327349364489034date-day"=
+>Wednesday</h2>
+<table align=3D"left" style=3D"border-collapse:separate!important;text-alig=
+n:left!important;display:block" cellpadding=3D"0" cellspacing=3D"0" border=
+=3D"0" role=3D"presentation">
+<tbody align=3D"left" style=3D"text-align:left!important;border-collapse:se=
+parate!important" cellpadding=3D"0" cellspacing=3D"0" border=3D"0">
+<tr align=3D"left" style=3D"text-align:left!important;border-collapse:separ=
+ate!important">
+<td align=3D"left" style=3D"text-align:left!important;display:inline-block"=
+><span style=3D"font-size:60px;font-weight:normal;color:#fffffe;padding:0;t=
+ext-align:left!important" id=3D"m_7320327349364489034date-number">17</span>=
+</td>
+<td align=3D"left" style=3D"text-align:left!important;padding-left:8px;padd=
+ing-top:10px;display:inline-block">
+<div style=3D"color:#fffffe;font-size:14px;font-weight:bold;text-align:left=
+!important;padding-bottom:3px" id=3D"m_7320327349364489034month">
+June</div>
+<div style=3D"color:#fffffe;font-size:14px;font-weight:bold;text-align:left=
+!important;padding-bottom:0px" id=3D"m_7320327349364489034year">
+2026</div>
+</td>
+</tr>
+<tr style=3D"border-collapse:separate!important;font-size:1px!important;lin=
+e-height:1px!important" cellpadding=3D"0" cellspacing=3D"0">
+<td colspan=3D"2" style=3D"font-size:1px!important;line-height:1px!importan=
+t">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+</td>
+<td class=3D"m_7320327349364489034dark-mode-section" style=3D"border-collap=
+se:separate!important;border:1px solid #707070;border-left:none;border-radi=
+us:0px 20px 20px 0px;padding:20px 55px" height=3D"100%" cellpadding=3D"0" c=
+ellspacing=3D"0" border=3D"0">
+<table align=3D"center" style=3D"text-align:center;border-collapse:separate=
+!important" cellpadding=3D"0" cellspacing=3D"0" border=3D"0" role=3D"presen=
+tation">
+<tbody>
+<tr cellpadding=3D"0" cellspacing=3D"0" border=3D"0">
+<td style=3D"text-align:center;vertical-align:middle">
+<h1 class=3D"m_7320327349364489034primary-font-color" style=3D"font-size:56=
+px;margin-bottom:5px;margin-top:0" id=3D"m_7320327349364489034bg-total-mail=
+pieces">
+0</h1>
+<p><b>Mailpiece(s)</b></p>
+</td>
+<td width=3D"40px" style=3D"padding:30px">&nbsp;</td>
+<td style=3D"text-align:center;vertical-align:middle">
+<h1 class=3D"m_7320327349364489034primary-font-color" style=3D"font-size:56=
+px;margin-bottom:5px;margin-top:0" id=3D"m_7320327349364489034bg-total-pack=
+ages">
+0</h1>
+<p><b>Package(s)</b></p>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<table role=3D"presentation" class=3D"m_7320327349364489034header m_7320327=
+349364489034mobile" style=3D"display:none;border-collapse:separate!importan=
+t" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" align=3D"center" bord=
+er=3D"0">
+<tbody>
+<tr class=3D"m_7320327349364489034email-box-shadow" style=3D"border-radius:=
+20px">
+<td class=3D"m_7320327349364489034primary-background-color" style=3D"backgr=
+ound-color:#333366;color:#fffffe;width:50%;padding:20px;border-radius:20px =
+20px 0px 00px">
+<h2 id=3D"m_7320327349364489034userMobileGreet" style=3D"font-size:clamp(1.=
+125rem,2.2vw + 0.5rem,1.6rem);color:#fffffe">
+Hi<span id=3D"m_7320327349364489034userNameMobile" style=3D"font-size:clamp=
+(1.125rem,2.2vw + 0.5rem,1.6rem);color:#fffffe">, Christian</span>!</h2>
+<p style=3D"color:#fffffe;font-size:clamp(1rem,2vw + 0.5rem,1.5rem);font-we=
+ight:100;line-height:28px">
+You have <span id=3D"m_7320327349364489034total-mailpieces-secondary">0</sp=
+an> mailpiece(s) and
+<span id=3D"m_7320327349364489034total-packages-secondary">0</span> inbound=
+ package(s) arriving soon.</p>
+</td>
+</tr>
+<tr>
+<td align=3D"center" class=3D"m_7320327349364489034dark-mode-section m_7320=
+327349364489034email-box-shadow m_7320327349364489034header-font-colors" st=
+yle=3D"border-radius:0 0 20px 20px;margin:0 auto!important;display:block">
+<table cellpadding=3D"0" cellspacing=3D"0" style=3D"border-collapse:separat=
+e!important">
+<tbody>
+<tr>
+<td style=3D"text-align:center;padding:20px;line-height:20px;padding-top:0p=
+x">
+<h1 style=3D"font-size:27px;padding-top:8px;text-transform:uppercase" id=3D=
+"m_7320327349364489034date-month-secondary">
+Jun</h1>
+<h1 class=3D"m_7320327349364489034header-font-colors" style=3D"font-size:26=
+px;padding-top:0px" id=3D"m_7320327349364489034date-day-secondary">
+<b></b>17</h1>
+</td>
+<td style=3D"text-align:center;padding:20px">
+<h1 id=3D"m_7320327349364489034bg-total-mailpieces-secondary" style=3D"font=
+-size:32px;margin-bottom:5px;margin-top:0">
+0</h1>
+<p class=3D"m_7320327349364489034header-font-colors" style=3D"font-size:15p=
+x"><b>Mailpiece(s)</b></p>
+</td>
+<td style=3D"text-align:center;padding:20px">
+<h1 id=3D"m_7320327349364489034bg-total-packages-secondary" style=3D"font-s=
+ize:32px;margin-bottom:5px;margin-top:0">
+0</h1>
+<p class=3D"m_7320327349364489034header-font-colors" style=3D"font-size:15p=
+x"><b>Package(s)</b></p>
+</td>
+</tr>
+<tr class=3D"m_7320327349364489034desktop">
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr height=3D"10px">
+</tr>
+</tbody>
+</table>
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+<div id=3D"m_7320327349364489034mail-section" style=3D"display:block">
+<table role=3D"presentation" class=3D"m_7320327349364489034primary-backgrou=
+nd-color" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"0" s=
+tyle=3D"background-color:#333366;color:#fffffe;border-top-left-radius:18px;=
+border-top-right-radius:18px;width:100%!important;table-layout:fixed">
+<tbody>
+<tr>
+<td class=3D"m_7320327349364489034primary-background-color" height=3D"80" w=
+idth=3D"50" style=3D"background-color:#333366;width:50px;min-width:50px;pad=
+ding-left:20px;border-top-left-radius:18px">
+<a id=3D"m_7320327349364489034mailbox-url-icon" href=3D"#m_7320327349364489=
+034_"><img style=3D"width:50px!important;min-width:50px" src=3D"https://www=
+.usps.com/email/id/icon-envelope.png" alt=3D"Icon Envelope" width=3D"50" he=
+ight=3D"34">
+</a></td>
+<td class=3D"m_7320327349364489034primary-background-color" style=3D"backgr=
+ound-color:#333366;vertical-align:middle;width:auto">
+<span>
+<h1 class=3D"m_7320327349364489034section-header-title" style=3D"display:in=
+line;vertical-align:middle;font-size:clamp(1.25rem,3.56vw,2.2rem)">
+&nbsp;&nbsp;MAIL</h1>
+</span></td>
+<td class=3D"m_7320327349364489034primary-background-color m_73203273493644=
+89034td-view-dash" style=3D"background-color:#333366;border-top-right-radiu=
+s:18px;padding-right:20px;text-align:right">
+<a id=3D"m_7320327349364489034mailbox-url-link" class=3D"m_7320327349364489=
+034view-dashboard-a" href=3D"https://informeddelivery.usps.com/trackingV2/d=
+igest/click?a=3DhMLXAgfT8cs1TFOn0bEkO0euH6yG3ZriypiTydnQOG9ArUvpYVLhDsaIRSw=
+aYdrMOBRa0vHoNPb1PQOfuNnrk1MS3j_fSOtETyWhO5BRtq3x52sv-MT-HSRTBiZ2d6ISwz8ZmK=
+gfsUvyGcZlEjKlVMBND_AwAUFNGD2kVNuxcKFHdodnnY4bzEHdPi_NoxTnHOboipPiUG7qUTbJi=
+LA" style=3D"text-decoration:none" target=3D"_blank"><span class=3D"m_73203=
+27349364489034mobile-button m_7320327349364489034primary-background-color m=
+_7320327349364489034view-dashboard-button" style=3D"background-color:#33336=
+6;border-radius:3px;padding:9px 10px;border:1px solid #fffffe;text-decorati=
+on:none;text-align:center;font-weight:bold;font-size:16px;height:44px;color=
+:#fffffe;width:200px;white-space:nowrap">View
+ Dashboard</span> </a></td>
+</tr>
+</tbody>
+</table>
+<div id=3D"m_7320327349364489034expected-today">
+<table border=3D"0" align=3D"center" width=3D"100%" role=3D"module" style=
+=3D"max-width:820px;display:block" cellpadding=3D"0" cellspacing=3D"0">
+<tbody style=3D"display:block">
+<tr role=3D"module-content" style=3D"display:block">
+<td id=3D"m_7320327349364489034campaign-div-id" style=3D"height:100%;vertic=
+al-align:top;display:block">
+</td>
+</tr>
+</tbody>
+</table>
+<table border=3D"0" role=3D"module" style=3D"max-width:820px;display:block"=
+ width=3D"100%" cellpadding=3D"0" cellspacing=3D"0">
+<tbody style=3D"display:block">
+<tr role=3D"module-content" style=3D"display:block">
+<td style=3D"height:100%;vertical-align:top;display:block" id=3D"m_73203273=
+49364489034mailpiece-div-id">
+</td>
+</tr>
+</tbody>
+</table>
+<div id=3D"m_7320327349364489034mailpiece-with-no-image-id">
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+<table class=3D"m_7320327349364489034email-box-shadow m_7320327349364489034=
+dark-mode-section" width=3D"100%" height=3D"100px" style=3D"border-radius:1=
+8px;border-collapse:separate!important;height:100px" cellpadding=3D"0" cell=
+spacing=3D"0">
+<tbody>
+<tr>
+<td height=3D"100" style=3D"background-color:#ffc260;border-radius:12px 0px=
+ 0px 12px;width:18px!important;min-width:18px!important;height:100px" width=
+=3D"18">
+</td>
+<td height=3D"100" width=3D"73" style=3D"height:100px;padding:0px 20px"><im=
+g width=3D"53" height=3D"48" style=3D"width:53px!important;height:48px!impo=
+rtant;min-width:53px!important" src=3D"https://www.usps.com/email/id/multip=
+le-envelopes-icon.png" alt=3D"multi envelope icon-dark-mode image"></td>
+<td height=3D"100" width=3D"100%" class=3D"m_7320327349364489034secondary-f=
+ont-color" style=3D"font-size:16px;line-height:1.5;padding-right:10px;heigh=
+t:100px;width:100%">
+<p>There is one or more mailpieces for which we do not currently have an im=
+age that is included in today's mail.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id=3D"m_7320327349364489034thisweek-saturation">
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id=3D"m_7320327349364489034packages-section" style=3D"display:block">
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+<table role=3D"presentation" class=3D"m_7320327349364489034primary-backgrou=
+nd-color" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"0" s=
+tyle=3D"background-color:#333366;color:#fffffe;border-top-left-radius:18px;=
+border-top-right-radius:18px;table-layout:fixed">
+<tbody>
+<tr>
+<td class=3D"m_7320327349364489034primary-background-color" height=3D"80" w=
+idth=3D"50" style=3D"background-color:#333366;width:50px;min-width:50px;pad=
+ding-left:20px;border-top-left-radius:18px">
+<a id=3D"m_7320327349364489034view-all-package-link-icon" href=3D"https://i=
+nformeddelivery.usps.com/box/pages/secure/DashboardAction_input?keyword=3Dp=
+ack" target=3D"_blank"><img src=3D"https://www.usps.com/email/id/packages-i=
+con.png" style=3D"width:46px!important;max-width:46px" alt=3D"Package Icon"=
+ width=3D"46" height=3D"36">
+</a></td>
+<td class=3D"m_7320327349364489034primary-background-color" style=3D"backgr=
+ound-color:#333366;vertical-align:middle;width:auto">
+<span>
+<h1 class=3D"m_7320327349364489034section-header-title" style=3D"vertical-a=
+lign:middle;display:inline;font-size:clamp(1.25rem,3.56vw,2.2rem);word-wrap=
+:normal">
+&nbsp;&nbsp;PACKAGES</h1>
+</span></td>
+<td class=3D"m_7320327349364489034primary-background-color m_73203273493644=
+89034td-view-dash" style=3D"background-color:#333366;border-top-right-radiu=
+s:18px;padding-right:20px;text-align:right">
+<a id=3D"m_7320327349364489034view-all-package-link-id" class=3D"m_73203273=
+49364489034view-dashboard-a" href=3D"https://informeddelivery.usps.com/trac=
+kingV2/digest/click?a=3DhMLXAgfT8cs1TFOn0bEkO70EDmNr7RhU5GHv3oyUk8YSRJlB0GZ=
+D1xWkOMaU9mmyuFkgLQLeyEP_6Njv50haghveZ56ESxQV8JAWcFUSl7Ts9br5UDj-h9i1m7MnYz=
+5UhMJbzcGY-xCRcCPengg_Mr1v79vU3_-dPM5q-L_tZhBvmYG5hls7fDlpmAVNjD82dYaK3xheS=
+y0-bh3ern6WzKw" style=3D"text-decoration:none" target=3D"_blank"><span clas=
+s=3D"m_7320327349364489034mobile-button m_7320327349364489034primary-backgr=
+ound-color m_7320327349364489034view-dashboard-button" style=3D"background-=
+color:#333366;border-radius:3px;padding:9px 10px;border:1px solid #fffffe;t=
+ext-decoration:none;text-align:center;font-weight:bold;font-size:16px;heigh=
+t:44px;color:#fffffe;width:200px;white-space:nowrap">View
+ Dashboard</span> </a></td>
+</tr>
+</tbody>
+</table>
+<div id=3D"m_7320327349364489034no-packages-today">
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+<table class=3D"m_7320327349364489034email-box-shadow m_7320327349364489034=
+dark-mode-section" width=3D"100%" height=3D"100" style=3D"border-radius:18p=
+x;border-collapse:separate!important;height:100px">
+<tbody>
+<tr>
+<td class=3D"m_7320327349364489034secondary-font-color" height=3D"100" styl=
+e=3D"border:1px solid #999999;border-radius:18px;padding:0 40px;font-size:1=
+6px;line-height:24px;height:100px">
+<b>No packages are available to display.</b></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id=3D"m_7320327349364489034today-package-div"></div>
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+<div id=3D"m_7320327349364489034soon-package-div"></div>
+<div id=3D"m_7320327349364489034awaiting_section">
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+<div id=3D"m_7320327349364489034awaiting-sender-package-div"></div>
+</div>
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+<table role=3D"module" border=3D"0" width=3D"100%" style=3D"width:100%;max-=
+width:820px" cellpadding=3D"0" cellspacing=3D"0">
+<tbody>
+<tr id=3D"m_7320327349364489034outbound-packages-spaces-tr">
+<td style=3D"padding:0px 0px 0px 0px" role=3D"module-content" bgcolor=3D"">=
+</td>
+</tr>
+</tbody>
+</table>
+<div id=3D"m_7320327349364489034outbound-package-div"></div>
+<table role=3D"module" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" wid=
+th=3D"100%" style=3D"table-layout:fixed">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+</tbody>
+</table>
+<table role=3D"presentation" id=3D"m_7320327349364489034refer-friend-packag=
+e" class=3D"m_7320327349364489034refer" style=3D"border-top:2px solid #9999=
+99" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0">
+<tbody>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+<tr>
+<td align=3D"center" style=3D"margin:0 auto"><img id=3D"m_73203273493644890=
+34footer-banner-img-id" style=3D"width:100%" src=3D"https://www.usps.com/em=
+ail/id/refer-friends-and-family-banner.png" alt=3D"footer banner"></td>
+</tr>
+<tr>
+<td style=3D"padding:0px 0px 30px 0px" role=3D"module-content" bgcolor=3D""=
+></td>
+</tr>
+<tr>
+<td style=3D"padding-top:0px;display:inline;vertical-align:middle">
+<div class=3D"m_7320327349364489034referButtons" style=3D"text-align:left;p=
+adding-left:2px;padding-right:4px">
+<span id=3D"m_7320327349364489034refer-email-button" class=3D"m_73203273493=
+64489034refer-email-button" style=3D"display:inline-block;margin-bottom:10p=
+x;margin-right:20px;text-align:left;vertical-align:middle!important"><span =
+class=3D"m_7320327349364489034primary-button" style=3D"background-color:#33=
+3367!important;border:1px solid #333367!important;border-radius:3px;color:#=
+fffffe!important;display:inline-block;vertical-align:middle!important"><a i=
+d=3D"m_7320327349364489034refer-email-link" href=3D"https://informeddeliver=
+y.usps.com/trackingV2/digest/referral?a=3DhMLXAgfT8cs1TFOn0bEkO6A1MeReSe9eR=
+x_UxaNV-lIRtpsnYApLutU_DzsOe3v84ZIWnjtPA8v1z8X549U9M2lepMSUlAP42SVprzuYDd1J=
+rt-ddF4e7dxgmZSyrYBXpjhuciaNitcnWtBxFX27MzcAT_qN9olnxzq2VTypu3BHRGQqV_86o0L=
+IsemeQNTzLWOWGg" style=3D"background-color:#333367!important;border:none!im=
+portant;border-radius:5px;color:#fffffe!important;display:inline-block;font=
+-family:sans-serif;font-size:16px!important;line-height:40px;text-align:cen=
+ter;text-decoration:none;width:225px;white-space:nowrap;min-height:42px;hei=
+ght:42px;max-height:42px;font-weight:bold!important;font-family:Arial,Helve=
+tica,sans-serif;text-align:center;vertical-align:middle!important" target=
+=3D"_blank">Refer
+ via Email</a> </span></span><span id=3D"m_7320327349364489034refer-text-bu=
+tton" class=3D"m_7320327349364489034refer-text-button" style=3D"display:inl=
+ine-block;margin-bottom:10px;margin-right:30px;text-align:left;vertical-ali=
+gn:middle!important"><span class=3D"m_7320327349364489034secondary-button" =
+style=3D"background-color:#fffffe!important;border:1px solid #333367!import=
+ant;border-radius:3px;color:#333367!important;display:inline-block;vertical=
+-align:middle!important;padding-right:1px"><a id=3D"m_7320327349364489034re=
+fer-text-link" href=3D"https://informeddelivery.usps.com/trackingV2/digest/=
+referral?a=3DhMLXAgfT8cs1TFOn0bEkO0JBWLvCQJfu5jdnEInvnfTt72ptE2IzGsur5ouG5S=
+NJaX5KP69M5ldm9_wO_k3whQ6tDM0nBJ1vNLtniOHADeaZCoCEiEpbAzh9LtnDLLoQ96G5ZUdau=
+TYHSj9-C4wLVPKMd2lDt3MN9z9O-yGk17sX1ek83mGQw8Nc84jHEwwujWI" style=3D"backgr=
+ound-color:#fffffe!important;border:none!important;border-radius:5px;color:=
+#333367!important;display:inline-block;font-family:sans-serif;font-size:16p=
+x!important;line-height:40px;text-align:center;text-decoration:none;width:2=
+25px;white-space:nowrap;min-height:42px;height:42px;max-height:42px;font-we=
+ight:bold!important;font-family:Arial,Helvetica,sans-serif;text-align:cente=
+r;vertical-align:top!important;overflow:hidden!important;margin-left:1px!im=
+portant;margin-right:1px!important" target=3D"_blank">Refer
+ via Text</a> </span></span></div>
+</td>
+</tr>
+</tbody>
+</table>
+<table role=3D"presentation" class=3D"m_7320327349364489034more-mail" style=
+=3D"border-bottom:2px solid #999999" width=3D"100%" cellpadding=3D"0" cells=
+pacing=3D"0" border=3D"0">
+<tbody>
+<tr>
+<td width=3D"100%" style=3D"padding:20px 0px 5px 0px;font-size:12px;line-he=
+ight:22px">
+<p class=3D"m_7320327349364489034secondary-font-color">You may have more ma=
+il or packages than are shown in your Daily Digest. To check,
+<b><a id=3D"m_7320327349364489034mailbox-url-link-2" style=3D"text-decorati=
+on:underline!important;color:#3573b1;font-weight:bold" href=3D"https://info=
+rmeddelivery.usps.com/trackingV2/digest/click?a=3DhMLXAgfT8cs1TFOn0bEkOzs8T=
+J5jox2TLdf1d1FPdhxj8tNvWACKlBvsV5vIxeWW6gOYfCFFS9YCRoPxr4qw7sYHf8oLh-3Rq5mB=
+u5zyj024Cqq0SDrLg7bvLt6zk9uR0QZh2NodEynlyGs3xyEiouI0djwLQZDOzMFZcRae006YIBd=
+xLFHmDihEqqqpT7cMyVt207yHqhVIAtmx6Hw6wb0" target=3D"_blank">go
+ to your Dashboard</a></b>.</p>
+<p class=3D"m_7320327349364489034secondary-font-color">Mail may arrive seve=
+ral days after you receive the notification. Please allow up to a week for =
+delivery before reporting missing mail.
+<b><a id=3D"m_7320327349364489034missing-mailpiece-href-id" href=3D"https:/=
+/informeddelivery.usps.com/trackingV2/digest/click?a=3DhMLXAgfT8cs1TFOn0bEk=
+O11_T_sc-x8lKzLIMaBFVviFKdYVE4HGQ0BF1Y1eP54EYiUAsZ--4eeYgi4enSx6VFdoSFtIA1f=
+GilRk0FIbELOqo2QWJEny7_9RPq6M5JVd6TIHHYTvjx5SLab1xaJ1sNI9AWnhFBoFAlwwGP4lhy=
+cgqQjy2Zr1qTTfcUBa3LUi8YRr4hKBeRLOBzvsmqnkF7YV" style=3D"text-decoration:un=
+derline!important;color:#3573b1;font-weight:bold" target=3D"_blank">Report
+ missing mail</a></b>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<table role=3D"presentation" class=3D"m_7320327349364489034legal" width=3D"=
+100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"0">
+<tbody>
+<tr>
+<td width=3D"100%" style=3D"padding:20px 0px;font-size:11px;line-height:14p=
+x">
+<p class=3D"m_7320327349364489034secondary-font-color">*These images repres=
+ent mail pieces that are sorted on USPS<sup>=C2=AE</sup> automated equipmen=
+t. Some of your mail may not be shown here.</p>
+<p class=3D"m_7320327349364489034secondary-font-color">You subscribed to th=
+is service with USPS<sup>=C2=AE</sup> Product Technology Innovation, 475 L`=
+Enfant Plaza SW, Washington, DC 20260.</p>
+<p class=3D"m_7320327349364489034secondary-font-color">If you no longer wis=
+h to receive daily email notifications,
+<a id=3D"m_7320327349364489034unsubscribe-url-link" href=3D"https://informe=
+ddelivery.usps.com/trackingV2/digest/click?a=3DhMLXAgfT8cs1TFOn0bEkOwpTUxlI=
+sNV5TKHNPz7c7FyZEWAh6eGBL4PU0Bn7H2hqGqPzLHqJNT4WWV0du-UsGA1pMSbFlxLfhsMXZpN=
+cpimF9beyiTzHQ6r3PflZS_mmE-5lUJSrzNhR3CCWG6jNzAx2BugjWGC-SjvcyUiGYNODOaco_M=
+N8vbiNOlEdN8Tq_2QPU-M4r9rVDJC4rm_laKiVV0YIVG1ScYxZvgEdmKh-8sFQPwkeNXuPmbQez=
+Ij2zxRc_8ZkZb8" style=3D"text-decoration:underline!important;color:#3573b1;=
+font-weight:bold" target=3D"_blank">
+unsubscribe here</a>.</p>
+<p class=3D"m_7320327349364489034secondary-font-color">If you need support,=
+ please visit
+<a href=3D"https://informeddelivery.usps.com/trackingV2/digest/click?a=3DhM=
+LXAgfT8cs1TFOn0bEkO4RQWaSEc9BptlnR1EO59xYzT0PkX192g1PV4qNG5-WN8jA4QZFWNOCql=
+l93i1ob0VgnepLf5aua2F2zujM--4dCOw458llX-UlkMGzoIgYF9pHcOimCH98bQYNycLrjF8q6=
+IV2JE4Smb8JkvVwrqvRHeQfY7wW9B3GiXC6P6rIFZs8yvd6cw1e63r2tisyY-Q" id=3D"m_732=
+0327349364489034user-support-href-id" style=3D"text-decoration:underline!im=
+portant;color:#3573b1;font-weight:bold" target=3D"_blank">
+user support for Informed Delivery<sup>=C2=AE</sup></a>.</p>
+<p class=3D"m_7320327349364489034secondary-font-color">For more information=
+ about this service, please visit
+<a id=3D"m_7320327349364489034faq-href-id" href=3D"https://informeddelivery=
+.usps.com/trackingV2/digest/click?a=3DhMLXAgfT8cs1TFOn0bEkO_Aw21IkRt-Gpvksa=
+bLxBrLkVVn-RfbPDQx24CnPq6CNJ7Nrz3D1uMM6cFuBXhz2CHYX-TeZ26c27N1qjAX_9Da6r1d5=
+3iIPkTmYsrhXxOcFVMmmcsfQTTmkL6GPuglZCLGGPRAz_aGNrQejYdgt2sMxaIWHxYhh56RQQHV=
+-xdRq7xXLDA" style=3D"text-decoration:underline!important;color:#3573b1;fon=
+t-weight:bold" target=3D"_blank">
+general information about Informed Delivery</a>.</p>
+<p class=3D"m_7320327349364489034secondary-font-color">Copyright =C2=A9 <sp=
+an id=3D"m_7320327349364489034copyright-year">
+2026</span> United States Postal Service<sup>=C2=AE</sup>. All Rights Reser=
+ved. The Eagle Logo and the trade dress of USPS<sup>=C2=AE</sup> Packaging =
+are among the many trademarks of the U.S. Postal Service<sup>=C2=AE</sup>.<=
+/p>
+<p class=3D"m_7320327349364489034secondary-font-color">This is an automated=
+ email, please do not reply to this message. This message is for the design=
+ated recipient only and may contain privileged, proprietary, or otherwise p=
+rivate information. If you have received
+ it in error, please delete. Any other use of the email by you is prohibite=
+d.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div><br clear=3D"all">
+</div>
+<br>
+<span class=3D"gmail_signature_prefix">-- </span><br>
+<div dir=3D"ltr" class=3D"gmail_signature" data-smartmail=3D"gmail_signatur=
+e">Christian Bongiorno<br>
+</div>
+</div>
+</div>
+</body>
+</html>
+
+--00000000000010580c0654761a01--

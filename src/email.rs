@@ -13,6 +13,7 @@ pub struct Header {
     pub subject: String,
     pub from: String,
     pub from_address: String,
+    pub resent_from: Option<String>,
     pub date: String,
     pub message_id: String,
 }
@@ -45,6 +46,7 @@ pub fn parse_email(raw_email: &[u8]) -> Result<Email> {
     let subject = message.subject().unwrap_or("unknown").to_string();
 
     let (from, from_address) = extract_from(&message);
+    let resent_from = extract_resent_from(&message);
 
     let date = extract_date(&message);
 
@@ -58,12 +60,24 @@ pub fn parse_email(raw_email: &[u8]) -> Result<Email> {
             subject,
             from,
             from_address,
+            resent_from,
             date,
             message_id,
         },
         body,
         images,
     })
+}
+
+fn extract_resent_from(message: &mail_parser::Message) -> Option<String> {
+    match message.resent_from() {
+        Some(MailAddress::List(addrs)) => {
+            addrs.first()
+                .and_then(|a| a.address.as_ref())
+                .map(|a| a.to_string())
+        }
+        _ => None,
+    }
 }
 
 fn extract_date(message: &mail_parser::Message) -> String {
