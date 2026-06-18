@@ -12,7 +12,7 @@ locals {
 resource "aws_ecr_repository" "extractor" {
   name                 = "${var.project_name}/extractor"
   image_tag_mutability = "MUTABLE"
-  force_delete         = true
+  force_delete         = var.force_delete_ecr
 
   image_scanning_configuration {
     scan_on_push = true

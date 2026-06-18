@@ -3,7 +3,7 @@
 resource "aws_ecr_repository" "confirmer" {
   name                 = "${var.project_name}/confirmer"
   image_tag_mutability = "MUTABLE"
-  force_delete         = true
+  force_delete         = var.force_delete_ecr
 
   image_scanning_configuration {
     scan_on_push = true
@@ -42,7 +42,8 @@ resource "aws_lambda_function" "confirmer" {
 
   environment {
     variables = {
-      RUST_LOG = "parmail_confirmer=info"
+      EXTRACTOR_QUEUE_URL = aws_sqs_queue.extractor.url
+      RUST_LOG            = "parmail_confirmer=info"
     }
   }
 
